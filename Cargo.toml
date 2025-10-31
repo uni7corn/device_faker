@@ -5,26 +5,28 @@ edition = "2021"
 authors = ["Seyud"]
 
 [dependencies]
-anyhow = "1.0.100"
-jni = "^0.21"
+anyhow = { version = "1.0.100", default-features = false }
+jni = { version = "^0.21", default-features = false }
 jni-sys = "^0.4"
-log = "^0.4"
-serde = { version = "1.0", features = ["derive"] }
-toml = "0.8"
+log = { version = "^0.4", default-features = false }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+toml = { version = "0.8", default-features = false, features = ["parse"] }
 zygisk-rs = { git = "https://github.com/Kr328/zygisk-rs", rev = "bf277f9a", default-features = false, features = ["v4"]}
 
 [lib]
 name = "zygisk"
-crate-type = ["dylib"]
+crate-type = ["cdylib"]
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "^0.14"
 
 [profile.release]
-strip = "symbols"
-opt-level = 3
-debug = 0
+strip = true          
+opt-level = 3 
+lto = "fat"                 
+panic = "abort"       
+codegen-units = 1     
+overflow-checks = false 
+debug = false
 debug-assertions = false
-lto = "fat"
 incremental = false
-codegen-units = 1

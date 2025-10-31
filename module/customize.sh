@@ -23,6 +23,8 @@ fi
 
 chcon u:object_r:system_file:s0 "$CONFIG_DIR" 2>/dev/null || true
 
+rm -f "$MODPATH/config.toml"
+
 ui_print "- 配置文件位置: $CONFIG_FILE"
 ui_print "- 请编辑配置文件添加需要伪装的应用"
 ui_print "- 修改配置后无需重启，仅需重启对应应用"
