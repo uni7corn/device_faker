@@ -15,11 +15,27 @@ pub struct AppConfig {
     pub model: Option<String>,
     #[serde(default)]
     pub name: Option<String>,
+    /// 工作模式：
+    /// - "lite": 只修改 Build 类（轻量模式，可卸载模块）
+    /// - "full": Build + SystemProperties Hook（完整模式，不可卸载）
+    /// - null/未设置: 默认使用全局配置
+    #[serde(default)]
+    pub mode: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    /// 全局默认模式："lite" 或 "full"
+    #[serde(default = "default_mode")]
+    pub default_mode: String,
+    /// 是否启用调试日志（默认关闭以提高隐蔽性）
+    #[serde(default)]
+    pub debug: bool,
     pub apps: Vec<AppConfig>,
+}
+
+fn default_mode() -> String {
+    "lite".to_string() // 默认使用轻量模式，增强隐蔽性
 }
 
 impl Config {
@@ -29,6 +45,11 @@ impl Config {
 
     pub fn get_app_config(&self, package_name: &str) -> Option<&AppConfig> {
         self.apps.iter().find(|app| app.package == package_name)
+    }
+
+    /// 获取应用的工作模式
+    pub fn get_mode<'a>(&'a self, app_config: &'a AppConfig) -> &'a str {
+        app_config.mode.as_deref().unwrap_or(&self.default_mode)
     }
 
     /// 构建系统属性映射（用于 SystemProperties Hook）

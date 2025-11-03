@@ -1,15 +1,16 @@
 mod config;
 
 use config::Config;
-use jni::JNIEnv;
-use log::error;
+use log::{error, info};
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::{fs::File, io::Read};
 use zygisk_rs::{register_zygisk_module, Api, AppSpecializeArgs, Module, ServerSpecializeArgs};
 
 // 全局状态:存储当前应用的伪装属性
 static FAKE_PROPS: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
+
+// 全局状态:标记是否使用了 full 模式（需要保持模块加载）
+static IS_FULL_MODE: Mutex<bool> = Mutex::new(false);
 
 // 原始 native_get 函数指针类型
 type OriginalNativeGet = unsafe extern "C" fn(
@@ -24,87 +25,140 @@ static ORIGINAL_NATIVE_GET: Mutex<Option<OriginalNativeGet>> = Mutex::new(None);
 
 struct MyModule {
     api: Api,
-    env: JNIEnv<'static>,
+    env: *mut jni_sys::JNIEnv, // 直接保存原始 JNI 环境指针
 }
 
 impl Module for MyModule {
     fn new(api: Api, env: *mut jni_sys::JNIEnv) -> Self {
-        // 初始化日志，使用 Error 级别减少日志输出，防止留痕
+        // 默认只记录错误，减少日志输出以提高隐蔽性
+        // 可以通过配置文件的 debug = true 启用详细日志
         android_logger::init_once(
             android_logger::Config::default()
-                .with_max_level(log::LevelFilter::Error) // 只记录错误，提高隐蔽性
+                .with_max_level(log::LevelFilter::Error) // 默认只记录错误
                 .with_tag("DeviceFaker"),
         );
-
-        let env = unsafe { JNIEnv::from_raw(env.cast()).unwrap() };
 
         Self { api, env }
     }
     fn pre_app_specialize(&mut self, args: &mut AppSpecializeArgs) {
         let mut inner = || -> anyhow::Result<()> {
-            // 获取包名
-            let package_name = self
-                .env
-                .get_string(unsafe {
-                    (args.nice_name as *mut jni_sys::jstring as *mut ()
-                        as *const jni::objects::JString<'_>)
-                        .as_ref()
-                        .unwrap()
-                })?
-                .to_string_lossy()
-                .to_string();
+            // 获取包名 - 使用原始 JNI 函数
+            let package_name = unsafe {
+                let jni_funcs = (**self.env).v1_4;
+                let jstring = *args.nice_name;
+                let chars = (jni_funcs.GetStringUTFChars)(self.env, jstring, std::ptr::null_mut());
+                if chars.is_null() {
+                    return Err(anyhow::anyhow!("Failed to get package name"));
+                }
+                let pkg = std::ffi::CStr::from_ptr(chars)
+                    .to_string_lossy()
+                    .to_string();
+                (jni_funcs.ReleaseStringUTFChars)(self.env, jstring, chars);
+                pkg
+            };
 
             // 读取配置文件
             let config_path = "/data/adb/device_faker/config/config.toml";
 
             // 检查文件是否存在
             if !std::path::Path::new(config_path).exists() {
-                self.api
-                    .set_option(zygisk_rs::ModuleOption::DlcloseModuleLibrary);
+                self.unload_module();
                 return Ok(());
             }
 
-            let mut config_file = match File::open(config_path) {
-                Ok(file) => file,
+            let config_content = match std::fs::read_to_string(config_path) {
+                Ok(content) => content,
                 Err(e) => {
-                    error!("Failed to open config: {}", e);
-                    self.api
-                        .set_option(zygisk_rs::ModuleOption::DlcloseModuleLibrary);
+                    error!("Failed to read config: {}", e);
+                    self.unload_module();
                     return Ok(());
                 }
             };
-
-            let mut config_content = String::new();
-            config_file.read_to_string(&mut config_content)?;
 
             let config = Config::from_toml(&config_content)?;
 
+            // 根据配置启用或禁用详细日志
+            if config.debug {
+                log::set_max_level(log::LevelFilter::Info);
+                info!("Debug mode enabled");
+                info!("Config loaded with {} apps", config.apps.len());
+            }
+
             // 查找当前应用的配置
             let app_config = match config.get_app_config(&package_name) {
-                Some(cfg) => cfg,
+                Some(cfg) => {
+                    if config.debug {
+                        info!("Found config for app: {}", package_name);
+                    }
+                    cfg
+                }
                 None => {
                     // 应用不在配置中，立即卸载模块
-                    self.api
-                        .set_option(zygisk_rs::ModuleOption::DlcloseModuleLibrary);
+                    if config.debug {
+                        info!("App {} not in config, unloading module", package_name);
+                    }
+                    self.unload_module();
                     return Ok(());
                 }
             };
 
-            // 构建属性映射表（用于 SystemProperties Hook）
-            let prop_map = Config::build_property_map(app_config);
+            // 获取工作模式
+            let mode = config.get_mode(app_config);
+            if config.debug {
+                info!("Using mode: {} for app: {}", mode, package_name);
+            }
 
-            // 保存到全局变量
-            *FAKE_PROPS.lock().unwrap() = Some(prop_map);
-
-            // Hook Build 类字段
+            // Hook Build 类字段（两种模式都需要）
             self.hook_build_fields(app_config)?;
+            if config.debug {
+                info!("Build fields hooked successfully");
+            }
 
-            // Hook SystemProperties.native_get
-            self.hook_system_properties()?;
+            // 根据模式决定是否 Hook SystemProperties
+            match mode {
+                "lite" => {
+                    // 轻量模式：只修改 Build 类，完成后卸载模块
+                    if config.debug {
+                        info!("Lite mode: only Build fields hooked, unloading module");
+                    }
+                    *IS_FULL_MODE.lock().unwrap() = false;
+                    self.unload_module();
+                }
+                "full" => {
+                    // 完整模式：Hook Build + SystemProperties
+                    if config.debug {
+                        info!("Full mode: hooking SystemProperties");
+                    }
 
-            // 完成伪装后立即卸载模块，减少在内存中的存在时间
-            self.api
-                .set_option(zygisk_rs::ModuleOption::DlcloseModuleLibrary);
+                    // 标记为 full 模式，防止模块被卸载
+                    *IS_FULL_MODE.lock().unwrap() = true;
+
+                    // 构建属性映射表并存储
+                    let prop_map = Config::build_property_map(app_config);
+                    if config.debug {
+                        info!("Property map created with {} entries", prop_map.len());
+                    }
+                    *FAKE_PROPS.lock().unwrap() = Some(prop_map);
+
+                    // Hook SystemProperties
+                    self.hook_system_properties()?;
+                    if config.debug {
+                        info!("SystemProperties hooked successfully, module will stay loaded");
+                    }
+                }
+                _ => {
+                    // 未知模式,回退到默认的 lite 模式
+                    error!(
+                        "Mode '{}' not fully supported, falling back to 'lite' mode",
+                        mode
+                    );
+                    if config.debug {
+                        info!("Lite mode (fallback): only Build fields hooked, unloading module");
+                    }
+                    *IS_FULL_MODE.lock().unwrap() = false;
+                    self.unload_module();
+                }
+            }
 
             Ok(())
         };
@@ -115,70 +169,103 @@ impl Module for MyModule {
     }
 
     fn post_app_specialize(&mut self, _args: &AppSpecializeArgs) {
-        // 额外的隐身策略：在 post_app_specialize 阶段再次确保模块卸载
-        // 即使 pre_app_specialize 中已经卸载，这里再次调用以提高隐蔽性
-        self.api
-            .set_option(zygisk_rs::ModuleOption::DlcloseModuleLibrary);
+        // 只在非 full 模式下卸载模块
+        // full 模式下，Hook 函数需要保持在内存中，否则会导致崩溃
+        let is_full_mode = *IS_FULL_MODE.lock().unwrap();
+        if !is_full_mode {
+            // lite 模式：可以安全卸载
+            self.unload_module();
+        }
+        // full 模式：不卸载，保持 Hook 函数可用
     }
 
     fn pre_server_specialize(&mut self, _args: &mut ServerSpecializeArgs) {
-        self.api
-            .set_option(zygisk_rs::ModuleOption::DlcloseModuleLibrary);
+        self.unload_module();
     }
 
     fn post_server_specialize(&mut self, _args: &ServerSpecializeArgs) {}
 }
 
 impl MyModule {
+    /// 卸载模块的辅助函数
+    #[inline]
+    fn unload_module(&mut self) {
+        self.api
+            .set_option(zygisk_rs::ModuleOption::DlcloseModuleLibrary);
+    }
+
     /// Hook Build 类的静态字段
     fn hook_build_fields(&mut self, app_config: &config::AppConfig) -> anyhow::Result<()> {
-        // 查找 android.os.Build 类
-        let build_class = self.env.find_class("android/os/Build")?;
+        unsafe {
+            let jni_funcs = (**self.env).v1_4;
 
-        // 只修改配置中存在的字段
-        if let Some(manufacturer) = &app_config.manufacturer {
-            self.set_build_field(&build_class, "MANUFACTURER", manufacturer)?;
-        }
+            // 查找 android.os.Build 类
+            let class_name = std::ffi::CString::new("android/os/Build")?;
+            let build_class = (jni_funcs.FindClass)(self.env, class_name.as_ptr());
+            if build_class.is_null() {
+                return Err(anyhow::anyhow!("Failed to find Build class"));
+            }
 
-        if let Some(brand) = &app_config.brand {
-            self.set_build_field(&build_class, "BRAND", brand)?;
-        }
+            // 只修改配置中存在的字段
+            if let Some(manufacturer) = &app_config.manufacturer {
+                self.set_build_field_raw(build_class, "MANUFACTURER", manufacturer)?;
+            }
 
-        if let Some(model) = &app_config.model {
-            self.set_build_field(&build_class, "MODEL", model)?;
-        }
+            if let Some(brand) = &app_config.brand {
+                self.set_build_field_raw(build_class, "BRAND", brand)?;
+            }
 
-        if let Some(name) = &app_config.name {
-            self.set_build_field(&build_class, "PRODUCT", name)?;
-            self.set_build_field(&build_class, "DEVICE", name)?;
+            if let Some(model) = &app_config.model {
+                self.set_build_field_raw(build_class, "MODEL", model)?;
+            }
+
+            if let Some(name) = &app_config.name {
+                self.set_build_field_raw(build_class, "PRODUCT", name)?;
+                self.set_build_field_raw(build_class, "DEVICE", name)?;
+            }
         }
 
         Ok(())
     }
 
-    /// 设置 Build 类的字段值
-    fn set_build_field(
+    /// 设置 Build 类的字段值 - 使用原始 JNI 调用
+    fn set_build_field_raw(
         &mut self,
-        build_class: &jni::objects::JClass,
+        build_class: jni_sys::jclass,
         field_name: &str,
         value: &str,
     ) -> anyhow::Result<()> {
-        let field_id =
-            self.env
-                .get_static_field_id(build_class, field_name, "Ljava/lang/String;")?;
+        unsafe {
+            let jni_funcs = (**self.env).v1_4;
 
-        let new_value = self.env.new_string(value)?;
+            // 获取字段 ID
+            let field_name_cstr = std::ffi::CString::new(field_name)?;
+            let signature_cstr = std::ffi::CString::new("Ljava/lang/String;")?;
+            let field_id = (jni_funcs.GetStaticFieldID)(
+                self.env,
+                build_class,
+                field_name_cstr.as_ptr(),
+                signature_cstr.as_ptr(),
+            );
+            if field_id.is_null() {
+                return Err(anyhow::anyhow!("Failed to get field ID for {}", field_name));
+            }
 
-        self.env.set_static_field(
-            build_class,
-            field_id,
-            jni::objects::JValue::Object(&new_value),
-        )?;
+            // 创建新的字符串值
+            let value_cstr = std::ffi::CString::new(value)?;
+            let new_value = (jni_funcs.NewStringUTF)(self.env, value_cstr.as_ptr());
+            if new_value.is_null() {
+                return Err(anyhow::anyhow!("Failed to create string for {}", value));
+            }
+
+            // 设置静态字段
+            (jni_funcs.SetStaticObjectField)(self.env, build_class, field_id, new_value);
+        }
 
         Ok(())
     }
 
-    /// Hook SystemProperties.native_get 方法
+    /// Hook SystemProperties.native_get 方法 (传统 JNI Hook)
     fn hook_system_properties(&mut self) -> anyhow::Result<()> {
         // 定义要 Hook 的 JNI 方法
         let mut methods = [jni_sys::JNINativeMethod {
@@ -189,11 +276,8 @@ impl MyModule {
         }];
 
         // Hook SystemProperties 类的 native_get 方法
-        // 获取原始 JNIEnv 指针
-        let env_ptr = self.env.get_raw() as *mut jni_sys::JNIEnv;
-
         self.api
-            .hook_jni_native_methods(env_ptr, "android/os/SystemProperties", &mut methods);
+            .hook_jni_native_methods(self.env, "android/os/SystemProperties", &mut methods);
 
         // 保存原始函数指针
         let original_fn_ptr = unsafe {
@@ -223,24 +307,29 @@ unsafe extern "C" fn native_get_hook(
         return def;
     }
 
-    let key_str = match std::ffi::CStr::from_ptr(key_cstr).to_str() {
-        Ok(s) => s.to_string(),
-        Err(_) => {
-            (jni_funcs.ReleaseStringUTFChars)(env, key, key_cstr);
-            return def;
+    // 检查是否需要伪装此属性
+    let result = {
+        let key_str = std::ffi::CStr::from_ptr(key_cstr);
+        if let Ok(key) = key_str.to_str() {
+            let fake_props = FAKE_PROPS.lock().unwrap();
+            if let Some(props) = fake_props.as_ref() {
+                props.get(key).map(|fake_value| {
+                    let fake_cstr = std::ffi::CString::new(fake_value.as_str()).unwrap();
+                    (jni_funcs.NewStringUTF)(env, fake_cstr.as_ptr())
+                })
+            } else {
+                None
+            }
+        } else {
+            None
         }
     };
 
     (jni_funcs.ReleaseStringUTFChars)(env, key, key_cstr);
 
-    // 检查是否需要伪装此属性
-    let fake_props = FAKE_PROPS.lock().unwrap();
-    if let Some(props) = fake_props.as_ref() {
-        if let Some(fake_value) = props.get(&key_str) {
-            // 返回伪装的值
-            let fake_cstr = std::ffi::CString::new(fake_value.as_str()).unwrap();
-            return (jni_funcs.NewStringUTF)(env, fake_cstr.as_ptr());
-        }
+    // 如果有伪装值，返回；否则调用原始函数
+    if let Some(fake_result) = result {
+        return fake_result;
     }
 
     // 未匹配的属性：调用原始 native_get 函数获取真实值

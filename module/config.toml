@@ -1,6 +1,17 @@
 # 机型伪装配置文件
 # 为不同的应用配置不同的伪装机型
 
+# 全局默认模式（推荐使用 lite 以增强隐蔽性）
+# - "lite": 轻量模式，只修改 Build 类，完成后卸载模块（不易被检测）⭐ 推荐
+# - "full": 完整模式，Hook Build + SystemProperties（功能完整，但可能被检测）
+default_mode = "lite"
+
+# 调试模式（默认关闭以提高隐蔽性）
+# 设置为 true 可以在 logcat 中看到详细日志，方便排查问题
+# 正常使用时建议设置为 false 或删除此行
+# debug = false
+
+# 示例 1: 使用默认 lite 模式的应用（不易被检测）
 [[apps]]
 package = "com.omarea.vtools"
 manufacturer = "Xiaomi"
@@ -8,10 +19,44 @@ brand = "Xiaomi"
 marketname = "Xiaomi 17 Pro Max"
 model = "2509FPN0BC"
 name = "popsicle"
+# mode 未设置，使用全局默认的 "lite" 模式
 
+# 示例 2: 需要完整伪装的应用（显式指定 full 模式）
 [[apps]]
 package = "com.coolapk.market"
 manufacturer = "Nothing"
 brand = "Nothing"
 marketname = "Nothing Phone (3)"
 model = "A024"
+name = "nothing3"
+mode = "full"  # 如果此应用需要 SystemProperties Hook，显式使用 full 模式
+
+# 模式说明：
+# 
+# ┌──────────┬────────────┬──────────────┬────────────┬──────────────┐
+# │   模式   │  Build类   │ Properties   │  可卸载    │   隐蔽性     │
+# ├──────────┼────────────┼──────────────┼────────────┼──────────────┤
+# │  lite ⭐ │     ✅     │      ❌      │     ✅     │  ⭐⭐⭐⭐⭐  │
+# │  full    │     ✅     │      ✅      │     ❌     │  ⭐⭐⭐      │
+# └──────────┴────────────┴──────────────┴────────────┴──────────────┘
+# 
+# 【lite 模式】（默认，推荐）⭐
+# - 只修改 android.os.Build 类的静态字段
+# - 完成后立即卸载模块，模块不驻留内存
+# - ✅ 优点：隐蔽性极高，与 COPG 相同的工作方式，不易被检测
+# - ✅ 优点：对 90% 的应用来说，伪装 Build 类已经足够
+# - ⚠️ 缺点：无法伪装 SystemProperties（极少数应用会检查）
+# - 适用场景：默认选择，适合大多数应用
+# 
+# 【full 模式】（按需使用）
+# - 修改 Build 类 + Hook SystemProperties.native_get
+# - 模块保持加载状态，驻留内存
+# - ✅ 优点：完整伪装，拦截所有属性查询
+# - ⚠️ 缺点：模块驻留内存，可能被某些应用检测到
+# - ⚠️ 注意：仅在 lite 模式不够用时才使用
+# - 适用场景：需要完全伪装 SystemProperties 的特殊应用
+# 
+# 推荐策略：
+# 1. 默认所有应用使用 lite 模式（不设置 mode 字段）
+# 2. 只有当某个应用在 lite 模式下仍能检测到真实机型时，才为其单独设置 mode = "full"
+# 3. 这样可以最大化隐蔽性，同时保留必要的完整伪装能力

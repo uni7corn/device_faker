@@ -6,7 +6,6 @@ authors = ["Seyud"]
 
 [dependencies]
 anyhow = { version = "1.0.100", default-features = false }
-jni = { version = "^0.21", default-features = false }
 jni-sys = "^0.4"
 log = { version = "^0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
