@@ -5,103 +5,6 @@
 
 配置文件使用 TOML 格式
 
-## 快速开始
-
-### 模板配置
-
-机型模板的配置方式，包名列表和设备信息写在一起：
-
-```toml
-default_mode = "lite"
-
-[templates.redmagic_9_pro]
-# 包名列表
-packages = [
-    "com.mobilelegends.mi",
-    "com.supercell.brawlstars",
-    "com.blizzard.diablo.immortal",
-]
-# 设备信息
-manufacturer = "ZTE"
-brand = "nubia"
-model = "NX769J"
-device = "REDMAGIC 9 Pro"
-fingerprint = "nubia/NX769J/NX769J:14/UKQ1.230917.001/20240813.173312:user/release-keys"
-```
-
-## 完整配置示例
-
-```toml
-# 全局默认模式
-default_mode = "lite"
-
-# 调试模式（可选）
-# debug = true
-
-# ============ 机型模板定义 ============
-
-# 机型模板：模板中包含包名列表
-[templates.redmagic_9_pro]
-packages = [
-    "com.mobilelegends.mi",
-    "com.supercell.brawlstars",
-]
-manufacturer = "ZTE"
-brand = "nubia"
-model = "NX769J"
-device = "REDMAGIC 9 Pro"
-product = "NX769J"
-name = "NX769J"  # 产品内部名称（仅 full 模式生效）
-fingerprint = "nubia/NX769J/NX769J:14/UKQ1.230917.001/20240813.173312:user/release-keys"
-
-[templates.xiaomi_13_pro]
-packages = [
-    "com.levelinfinite.sgameGlobal",
-]
-manufacturer = "Xiaomi"
-brand = "Xiaomi"
-model = "2210132G"
-device = "Xiaomi 13 Pro"
-product = "2210132G"
-name = "fuxi"  # 产品内部名称（仅 full 模式生效）
-fingerprint = "Xiaomi/fuxi_eea/fuxi:13/TKQ1.221114.001/OS2.0.102.0.VMCEUXM:user/release-keys"
-
-[templates.oneplus_8_pro]
-# 这个模板没有包名列表，仅供 [[apps]] 直接配置时引用设备信息
-manufacturer = "OnePlus"
-brand = "OnePlus"
-model = "IN2023"
-device = "OnePlus 8 Pro 5G"
-product = "IN2023"
-name = "OnePlus8Pro"  # 产品内部名称（仅 full 模式生效）
-fingerprint = "OnePlus/IN2023/OnePlus8Pro:13/RKQ1.211119.001/20230501:user/release-keys"
-
-# ============ 应用配置 ============
-
-# 方式一：机型模板 - 已在模板的 packages 中定义，无需写 [[apps]]
-# com.mobilelegends.mi -> 自动使用 redmagic_9_pro
-# com.levelinfinite.sgameGlobal -> 自动使用 xiaomi_13_pro
-
-# 方式二：直接配置 - 单独配置或覆盖模板
-[[apps]]
-package = "com.omarea.vtools"
-manufacturer = "Xiaomi"
-model = "2509FPN0BC"
-brand = "Xiaomi"
-device = "Xiaomi 15 Pro"
-fingerprint = "Xiaomi/2509FPN0BC/Xiaomi15Pro:14/UP1A.231005.007/V816.0.3.0.VNBCNXM:user/release-keys"
-
-# 如果要覆盖模板中的包名配置，也用 [[apps]]（优先级更高）
-[[apps]]
-package = "com.mobilelegends.mi"  # 覆盖 redmagic_9_pro 模板的配置
-manufacturer = "Samsung"
-model = "SM-S9280"
-brand = "samsung"
-device = "b0q"
-fingerprint = "samsung/b0qzcx/b0q:14/UP1A.231005.007/S9280ZCU1AXC1:user/release-keys"
-mode = "full"  # 覆盖模式
-```
-
 ## 全局设置
 
 ### default_mode（全局默认模式）
@@ -136,98 +39,7 @@ debug = true  # 启用详细日志（用于调试）
 - 关闭时只输出 Error 级别日志
 - 正常使用建议关闭以提高隐蔽性
 
-## 机型模板配置
-
-### 模板定义
-
-在 `[templates.模板名]` 下定义机型设备信息和包名列表：
-
-```toml
-[templates.redmagic_9_pro]
-# 包名列表
-packages = [
-    "com.mobilelegends.mi",
-    "com.supercell.brawlstars",
-    "com.blizzard.diablo.immortal",
-]
-# 设备信息
-manufacturer = "ZTE"
-brand = "nubia"
-model = "NX769J"
-device = "REDMAGIC 9 Pro"
-product = "NX769J"
-name = "NX769J"  # 产品内部名称（仅 full 模式生效）
-fingerprint = "nubia/NX769J/NX769J:14/UKQ1.230917.001/20240813.173312:user/release-keys"
-# mode = "lite"  # 可选：为模板指定默认模式
-```
-
-### 模板字段说明
-
-所有字段都是**可选的**，只配置需要伪装的字段即可：
-
-- `packages` - 包名列表，使用此模板的应用包名（可选）
-- `manufacturer` - 制造商，伪装 `Build.MANUFACTURER`
-- `brand` - 品牌，伪装 `Build.BRAND`
-- `model` - 型号，伪装 `Build.MODEL`
-- `device` - 设备名称，伪装 `Build.DEVICE`
-- `product` - 产品标识，伪装 `Build.PRODUCT`
-- `fingerprint` - 系统指纹，伪装 `Build.FINGERPRINT`
-- `name` - 产品内部名称（仅用于 SystemProperties，lite 模式下无效）
-- `marketname` - 市场名称（仅用于 SystemProperties，lite 模式下无效）
-- **`mode`** - 模板默认模式（可选）⭐
-  - `"lite"` - 轻量模式（默认）
-  - `"full"` - 完整模式
-  - 如果不设置，使用全局 `default_mode`
-
-### 预定义模板示例
-
-可以预定义常用机型模板：
-
-```toml
-# 轻量模式模板（默认）
-[templates.redmagic_9_pro]
-manufacturer = "ZTE"
-brand = "nubia"
-model = "NX769J"
-device = "REDMAGIC 9 Pro"
-fingerprint = "nubia/NX769J/NX769J:14/UKQ1.230917.001/20240813.173312:user/release-keys"
-# mode = "lite"  # 可选，不设置则使用全局 default_mode
-
-# 完整模式模板示例
-[templates.special_device]
-packages = ["com.special.app"]
-manufacturer = "Xiaomi"
-brand = "Xiaomi"
-model = "2210132G"
-device = "Xiaomi 13 Pro"
-product = "fuxi"
-name = "fuxi"  # full 模式下生效
-fingerprint = "Xiaomi/fuxi_eea/fuxi:13/TKQ1.221114.001/OS2.0.102.0.VMCEUXM:user/release-keys"
-mode = "full"  # 为此模板设置完整模式
-
-[templates.oneplus_8_pro]
-manufacturer = "OnePlus"
-brand = "OnePlus"
-model = "IN2023"
-device = "OnePlus 8 Pro 5G"
-fingerprint = "OnePlus/IN2023/OnePlus8Pro:13/RKQ1.211119.001/20230501:user/release-keys"
-
-[templates.poco_f5]
-manufacturer = "Xiaomi"
-brand = "POCO"
-model = "23049PCD8G"
-device = "POCO F5"
-fingerprint = "POCO/23049PCD8G/POCOF5:13/TQ3A.230805.001/20230620:user/release-keys"
-
-[templates.galaxy_s24_ultra]
-manufacturer = "Samsung"
-brand = "Samsung"
-model = "SM-S928B"
-device = "Galaxy S24 Ultra"
-fingerprint = "samsung/SM-S928B/SM-S928B:14/UP1A.231005.007/20240225:user/release-keys"
-```
-
-## 应用配置
+## 编辑配置
 
 ### 方式一：机型模板
 
@@ -246,6 +58,17 @@ brand = "nubia"
 model = "NX769J"
 device = "REDMAGIC 9 Pro"
 fingerprint = "nubia/NX769J/NX769J:14/UKQ1.230917.001/20240813.173312:user/release-keys"
+
+[templates.pixel_xl]
+packages = [
+    "com.google.android.apps.photos",
+]
+manufacturer = "Google"
+brand = "google"
+model = "marlin"
+device = "Pixel XL"
+product = "marlin"
+fingerprint = "google/marlin/marlin:10/QP1A.191005.007.A3/5972272:user/release-keys"
 
 # 无需写 [[apps]]，所有包名自动使用该模板
 ```
@@ -270,6 +93,13 @@ product = "popsicle"
 name = "popsicle"  # 产品内部名称（仅 full 模式生效）
 fingerprint = "Xiaomi/2509FPN0BC/Xiaomi15Pro:14/UP1A.231005.007/V816.0.3.0.VNBCNXM:user/release-keys"
 mode = "full"  # 可选：覆盖全局模式
+
+[[apps]]
+package = "com.coolapk.market"
+manufacturer = "Nothing"
+brand = "Nothing"
+marketname = "Nothing Phone (3)"
+model = "A024"
 ```
 
 **优点**：

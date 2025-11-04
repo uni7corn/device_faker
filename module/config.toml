@@ -21,7 +21,6 @@ default_mode = "lite"
 # 定义常用机型模板，可以直接在模板中指定包名列表
 
 [templates.redmagic_9_pro]
-# 包名列表
 packages = [
     "com.mobilelegends.mi",
     "com.supercell.brawlstars",
@@ -29,15 +28,12 @@ packages = [
     "com.netease.newspike",
     "com.activision.callofduty.warzone",
 ]
-# 设备信息
 manufacturer = "ZTE"
 brand = "nubia"
 model = "NX769J"
 device = "REDMAGIC 9 Pro"
 product = "NX769J"
-name = "NX769J"  # 产品内部名称（仅 full 模式生效，影响 ro.product.name）
 fingerprint = "nubia/NX769J/NX769J:14/UKQ1.230917.001/20240813.173312:user/release-keys"
-# mode = "lite"  # 可选：为模板指定默认模式
 
 [templates.xiaomi_13_pro]
 packages = [
@@ -54,40 +50,6 @@ product = "2210132G"
 name = "fuxi"  # 产品内部名称（仅 full 模式生效）
 fingerprint = "Xiaomi/fuxi_eea/fuxi:13/TKQ1.221114.001/OS2.0.102.0.VMCEUXM:user/release-keys"
 
-[templates.oneplus_8_pro]
-packages = [
-    "com.riotgames.league.wildrift",
-]
-manufacturer = "OnePlus"
-brand = "OnePlus"
-model = "IN2023"
-device = "OnePlus 8 Pro 5G"
-product = "IN2023"
-name = "OnePlus8Pro"  # 产品内部名称（仅 full 模式生效）
-fingerprint = "OnePlus/IN2023/OnePlus8Pro:13/RKQ1.211119.001/20230501:user/release-keys"
-
-[templates.poco_f5]
-packages = [
-    "com.mobile.legends",
-]
-manufacturer = "Xiaomi"
-brand = "POCO"
-model = "23049PCD8G"
-device = "POCO F5"
-product = "23049PCD8G"
-name = "POCOF5"  # 产品内部名称（仅 full 模式生效）
-fingerprint = "POCO/23049PCD8G/POCOF5:13/TQ3A.230805.001/20230620:user/release-keys"
-
-[templates.rog_phone_6d]
-packages = []  # 暂无应用使用
-manufacturer = "ASUS"
-brand = "ASUS"
-model = "AI2203"
-device = "ROG Phone 6D Ultimate"
-product = "AI2203"
-name = "AI2203"  # 产品内部名称（仅 full 模式生效）
-fingerprint = "ASUS/AI2203/ROG Phone 6D:14/UP1A.231005.007/20240315:user/release-keys"
-
 # 需要完整模式的模板示例（如果某些应用需要 SystemProperties Hook）
 # [templates.special_device_full]
 # packages = [
@@ -100,18 +62,6 @@ fingerprint = "ASUS/AI2203/ROG Phone 6D:14/UP1A.231005.007/20240315:user/release
 # name = "fuxi"  # full 模式下生效
 # mode = "full"  # 为这个模板的所有应用设置完整模式
 
-[templates.galaxy_s24_ultra]
-packages = [
-    "com.ea.gp.fifamobile",
-]
-manufacturer = "Samsung"
-brand = "Samsung"
-model = "SM-S928B"
-device = "Galaxy S24 Ultra"
-product = "SM-S928B"
-name = "SM-S928B"  # 产品内部名称（仅 full 模式生效）
-fingerprint = "samsung/SM-S928B/SM-S928B:14/UP1A.231005.007/20240225:user/release-keys"
-
 [templates.pixel_xl]
 packages = [
     "com.google.android.apps.photos",
@@ -121,7 +71,6 @@ brand = "google"
 model = "marlin"
 device = "Pixel XL"
 product = "marlin"
-name = "marlin"  # 产品内部名称（仅 full 模式生效）
 fingerprint = "google/marlin/marlin:10/QP1A.191005.007.A3/5972272:user/release-keys"
 
 # ============================================================
@@ -142,7 +91,14 @@ brand = "Xiaomi"
 marketname = "Xiaomi 17 Pro Max"  # 市场名称（仅 full 模式生效）
 model = "2509FPN0BC"
 name = "popsicle"  # 产品内部名称（仅 full 模式生效）
-# mode 未设置，使用全局默认的 "lite" 模式
+mode = "full"  # 为这个应用设置完整模式 
+
+[[apps]]
+package = "com.coolapk.market"
+manufacturer = "Nothing"
+brand = "Nothing"
+marketname = "Nothing Phone (3)"
+model = "A024"
 
 # ============================================================
 # 配置说明
