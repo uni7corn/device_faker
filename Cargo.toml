@@ -6,11 +6,11 @@ authors = ["Seyud"]
 
 [dependencies]
 anyhow = { version = "1.0.100", default-features = false }
-jni-sys = "^0.4"
+jni = { version = "0.21", default-features = false }
 log = { version = "^0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 toml = { version = "0.8", default-features = false, features = ["parse"] }
-zygisk-rs = { git = "https://github.com/Kr328/zygisk-rs", rev = "bf277f9a", default-features = false, features = ["v4"]}
+zygisk-api = { git = "https://github.com/Seyud/zygisk-api-rs.git" }
 
 [build-dependencies]
 cc = "1.0"
