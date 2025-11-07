@@ -204,28 +204,40 @@ impl MyModule {
             .find_class("android/os/Build")
             .map_err(|e| anyhow::anyhow!("Failed to find Build class: {}", e))?;
 
-        // 只修改配置中存在的字段
-        if let Some(manufacturer) = &merged_config.manufacturer {
+        // 只修改配置中存在且非空的字段
+        if let Some(manufacturer) = &merged_config.manufacturer
+            && !manufacturer.is_empty()
+        {
             Self::set_build_field(env, &build_class, "MANUFACTURER", manufacturer)?;
         }
 
-        if let Some(brand) = &merged_config.brand {
+        if let Some(brand) = &merged_config.brand
+            && !brand.is_empty()
+        {
             Self::set_build_field(env, &build_class, "BRAND", brand)?;
         }
 
-        if let Some(model) = &merged_config.model {
+        if let Some(model) = &merged_config.model
+            && !model.is_empty()
+        {
             Self::set_build_field(env, &build_class, "MODEL", model)?;
         }
 
-        if let Some(device) = &merged_config.device {
+        if let Some(device) = &merged_config.device
+            && !device.is_empty()
+        {
             Self::set_build_field(env, &build_class, "DEVICE", device)?;
         }
 
-        if let Some(product) = &merged_config.product {
+        if let Some(product) = &merged_config.product
+            && !product.is_empty()
+        {
             Self::set_build_field(env, &build_class, "PRODUCT", product)?;
         }
 
-        if let Some(fingerprint) = &merged_config.fingerprint {
+        if let Some(fingerprint) = &merged_config.fingerprint
+            && !fingerprint.is_empty()
+        {
             Self::set_build_field(env, &build_class, "FINGERPRINT", fingerprint)?;
         }
 

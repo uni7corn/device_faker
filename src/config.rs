@@ -137,28 +137,43 @@ impl Config {
 
     /// 构建合并配置的系统属性映射
     /// 注意：仅用于 full 模式的 SystemProperties Hook
+    /// 空字符串会被忽略，不会添加到映射中
     pub fn build_merged_property_map(merged: &MergedAppConfig) -> HashMap<String, String> {
         let mut map = HashMap::new();
 
-        if let Some(manufacturer) = &merged.manufacturer {
+        if let Some(manufacturer) = &merged.manufacturer
+            && !manufacturer.is_empty()
+        {
             map.insert("ro.product.manufacturer".to_string(), manufacturer.clone());
         }
-        if let Some(brand) = &merged.brand {
+        if let Some(brand) = &merged.brand
+            && !brand.is_empty()
+        {
             map.insert("ro.product.brand".to_string(), brand.clone());
         }
-        if let Some(marketname) = &merged.marketname {
+        if let Some(marketname) = &merged.marketname
+            && !marketname.is_empty()
+        {
             map.insert("ro.product.marketname".to_string(), marketname.clone());
         }
-        if let Some(model) = &merged.model {
+        if let Some(model) = &merged.model
+            && !model.is_empty()
+        {
             map.insert("ro.product.model".to_string(), model.clone());
         }
-        if let Some(name) = &merged.name {
+        if let Some(name) = &merged.name
+            && !name.is_empty()
+        {
             map.insert("ro.product.name".to_string(), name.clone());
         }
-        if let Some(product) = &merged.product {
+        if let Some(product) = &merged.product
+            && !product.is_empty()
+        {
             map.insert("ro.product.device".to_string(), product.clone());
         }
-        if let Some(fingerprint) = &merged.fingerprint {
+        if let Some(fingerprint) = &merged.fingerprint
+            && !fingerprint.is_empty()
+        {
             map.insert("ro.build.fingerprint".to_string(), fingerprint.clone());
         }
 
