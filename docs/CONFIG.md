@@ -22,7 +22,7 @@ default_mode = "lite"  # 推荐：轻量模式（隐藏性更好）
   - 适合 90% 的应用
 
 - `"full"` - 完整模式
-  - 修改 Build 类 + Hook SystemProperties
+  - 修改 Build 类 + 伪装 SystemProperties
   - 模块驻留内存
   - 可能被检测
   - 仅在 lite 不够用时使用
@@ -137,20 +137,21 @@ model = "SM-S9280"
 **字段与系统属性映射关系**:
 | 字段 | lite 模式 | full 模式 (SystemProperties) | 说明 |
 |------|----------|------------------------------|------|
-| `manufacturer` | `Build.MANUFACTURER` | + `ro.product.manufacturer` | 制造商 (如: Xiaomi, Samsung) |
+| `manufacturer` | `Build.MANUFACTURER` | + `ro.product.manufacturer` | 厂商 (如: Xiaomi, Samsung) |
 | `brand` | `Build.BRAND` | + `ro.product.brand` | 品牌 (如: Redmi, Nothing) |
-| `model` | `Build.MODEL` | + `ro.product.model` | 型号 (如: 2210132G) |
-| `device` | `Build.DEVICE` | (仅 Build 字段) | 设备代号 (如: fuxi) |
-| `product` | `Build.PRODUCT` | + `ro.product.device` | 产品标识 (如: fuxi) |
-| `fingerprint` | `Build.FINGERPRINT` | + `ro.build.fingerprint` | 指纹信息 |
-| `name` | ❌ | `ro.product.name` | 产品名称 (如: fuxi) |
-| `marketname` | ❌ | `ro.product.marketname` | 市场名称 (如: REDMI K90 Pro Max) |
+| `model` | `Build.MODEL` | + `ro.product.model` | 序号 (如: 2210132G) |
+| `device` | `Build.DEVICE` | (仅 Build 字段) | 型号 (如: REDMAGIC 9 Pro) |
+| `product` | `Build.PRODUCT` | (仅 Build 字段) | 序号 (如: 2509FPN0BC) |
+| `fingerprint` | `Build.FINGERPRINT` | + `ro.build.fingerprint` | 指纹 |
+| `name` | ❌ | `ro.product.name` + `ro.product.device` | 代号 (如: fuxi) |
+| `marketname` | ❌ | `ro.product.marketname` | 型号 (如: REDMI K90 Pro Max) |
 
 **注意**:
 - 除了 `package` 外,所有字段都是可选的
 - 使用模板的 `packages` 时,无需写 [[apps]](自动应用)
 - [[apps]] 中的字段会覆盖模板的配置
 - `name` 和 `marketname` 仅在 **full 模式**下有效(影响 SystemProperties)
+- `name` 字段在 full 模式下会同时伪装 `ro.product.name` 和 `ro.product.device`
 - **lite 模式**下,只有 `manufacturer`、`brand`、`model`、`device`、`product`、`fingerprint` 生效
 
 ## 模式对比
@@ -158,10 +159,10 @@ model = "SM-S9280"
 | 特性 | lite 模式 ⭐ | full 模式 |
 |------|-------------|-----------|
 | Build 类伪装 | ✅ | ✅ |
-| SystemProperties Hook | ❌ | ✅ |
+| SystemProperties 伪装 | ❌ | ✅ |
 | 模块可卸载 | ✅ | ❌ |
 | 隐蔽性 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| 被检测风险 | 极低 | 中等 |
+| 被检测风险 | 极低 | 较低 |
 | 推荐度 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
 
 ## 如何选择模式？

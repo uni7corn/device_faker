@@ -165,11 +165,7 @@ impl Config {
             && !name.is_empty()
         {
             map.insert("ro.product.name".to_string(), name.clone());
-        }
-        if let Some(product) = &merged.product
-            && !product.is_empty()
-        {
-            map.insert("ro.product.device".to_string(), product.clone());
+            map.insert("ro.product.device".to_string(), name.clone());
         }
         if let Some(fingerprint) = &merged.fingerprint
             && !fingerprint.is_empty()

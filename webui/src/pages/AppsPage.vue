@@ -123,7 +123,7 @@
           <el-form-item label="Name（仅 full 模式生效）">
             <el-input v-model="customFormData.name" placeholder="如: fuxi" />
           </el-form-item>
-          <el-form-item label="Market Name（，仅 full 模式生效）">
+          <el-form-item label="Market Name（仅 full 模式生效）">
             <el-input v-model="customFormData.marketname" placeholder="如: REDMI K90 Pro Max" />
           </el-form-item>
           <el-form-item label="Fingerprint">

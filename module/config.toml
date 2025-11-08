@@ -7,7 +7,7 @@
 
 # 全局默认模式（推荐使用 lite 以增强隐蔽性）
 # - "lite": 轻量模式，只修改 Build 类，完成后卸载模块（不易被检测）⭐ 推荐
-# - "full": 完整模式，Hook Build + SystemProperties（功能完整，但可能被检测）
+# - "full": 完整模式，伪装 Build + SystemProperties（功能完整，但可能被检测）
 default_mode = "lite"
 
 # 调试模式（默认关闭以提高隐蔽性）
@@ -35,7 +35,32 @@ device = "REDMAGIC 9 Pro"
 product = "NX769J"
 fingerprint = "nubia/NX769J/NX769J:14/UKQ1.230917.001/20240813.173312:user/release-keys"
 
-# 需要完整模式的模板示例（如果某些应用需要 SystemProperties Hook）
+[templates]
+[templates."一加15"]
+manufacturer = "OnePlus"
+brand = "OnePlus"
+model = "PLK110"
+product = "PLK110"
+fingerprint = ""
+packages = [ "com.tencent.tmgp.pubgmhd", "com.tencent.tmgp.supercell.clashofclans", "com.tencent.tmgp.speedmobile" ]
+
+[templates.IQOO15]
+manufacturer = "VIVO"
+brand = "VIVO"
+model = "V2505A"
+product = "V2505A"
+fingerprint = ""
+packages = [ "com.tencent.tmgp.sgame", "com.tencent.tmgp.codev" ]
+
+[templates."红魔平板3"]
+manufacturer = "NUBIA"
+brand = "NUBIA"
+model = "NP05J"
+product = "NP05J"
+fingerprint = ""
+packages = [ "com.tencent.tmgp.cf" ]
+
+# 需要完整模式的模板示例（如果某些应用需要 SystemProperties 伪装）
 # [templates.special_device_full]
 # packages = [
 #     "com.some.special.app",
@@ -85,6 +110,90 @@ brand = "Nothing"
 marketname = "Nothing Phone (3)"
 model = "A024"
 
+[[apps]]
+package = "com.tencent.tmgp.pubgmhd"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.tencent.tmgp.sgame"
+model = "V2505A"
+manufacturer = "VIVO"
+brand = "vivo"
+
+[[apps]]
+package = "com.rekoo.pubgm"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.tencent.tmgp.cf"
+model = "NP05J"
+brand = "NUBIA"
+manufacturer = "NUBIA"
+
+[[apps]]
+package = "com.tencent.lolm"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.vng.pubgmobile"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.tencent.tmgp.dfm"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.tencent.mf.uam"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.tencent.tmgp.cod"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.tencent.jkchess"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.tencent.tmgp.speedmobile"
+model = "PLK110"
+manufacturer = "OnePlus"
+brand = "OnePlus"
+
+[[apps]]
+package = "com.tencent.tmgp.supercell.clashofclans"
+model = "PLK110"
+brand = "OnePlus"
+manufacturer = "OnePlus"
+
+[[apps]]
+package = "com.tencent.tmgp.codev"
+model = "V2505A"
+brand = "VIVO"
+manufacturer = "vivo"
+
+[[apps]]
+package = "flar2.devcheck"
+model = "V2505A"
+brand = "VIVO"
+manufacturer = "vivo"
+
 # ============================================================
 # 配置说明
 # ============================================================
@@ -113,6 +222,7 @@ model = "A024"
 #
 # full 模式：
 #   ✅ 所有字段都生效
+#   ⭐ name 字段会同时伪装 ro.product.name 和 ro.product.device
 # 
 # 【模式说明】
 # 
@@ -127,12 +237,12 @@ model = "A024"
 # - 只修改 android.os.Build 类的静态字段
 # - 完成后立即卸载模块，模块不驻留内存
 # - ✅ 优点：隐蔽性极高，不易被检测
-# - ✅ 优点：对 90% 的应用来说，伪装 Build 类已经足够
+# - ✅ 优点：对 95% 的应用来说，伪装 Build 类已经足够
 # - ⚠️ 缺点：无法伪装 SystemProperties（极少数应用会检查）
 # - 适用场景：默认选择，适合大多数应用
 # 
 # 【full 模式】（按需使用）
-# - 修改 Build 类 + Hook SystemProperties.native_get
+# - 修改 Build 类 + 伪装 SystemProperties.native_get
 # - 模块保持加载状态，驻留内存
 # - ✅ 优点：完整伪装，拦截所有属性查询
 # - ⚠️ 缺点：模块驻留内存，可能被某些应用检测到
