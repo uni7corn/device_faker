@@ -1,4 +1,8 @@
+**简体中文** | [English](https://github.com/Seyud/device_faker/blob/main/docs/en/README.md)
+
 # Device Faker 📱
+
+<img src="logo.png" style="width: 96px;" alt="logo">
 
 一个基于 Zygisk 的机型伪装模块，可以为不同的应用配置不同的设备型号。
 
