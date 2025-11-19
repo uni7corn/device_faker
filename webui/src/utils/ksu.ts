@@ -1,4 +1,4 @@
-import { exec, listPackages, getPackagesInfo, getPackagesIcon } from 'kernelsu-alt'
+import { exec, listPackages, getPackagesInfo } from 'kernelsu-alt'
 
 // 执行命令
 export async function execCommand(command: string): Promise<string> {
@@ -86,20 +86,32 @@ export async function getInstalledApps() {
         let versionName = ''
         let versionCode = 0
 
-        // 使用 kernelsu-alt 的 getPackagesInfo API
-        try {
-          const info = await getPackagesInfo(pkg)
-          appName = info.appLabel || pkg
-          versionName = info.versionName || ''
-          versionCode = info.versionCode || 0
-        } catch {
-          // 尝试使用 WebUI-X packageManager API
-          if (typeof window.$packageManager !== 'undefined') {
-            try {
-              const info = window.$packageManager.getApplicationInfo(pkg, 0, 0)
-              appName = info.getLabel() || pkg
-            } catch {
-              // 静默失败，使用包名
+        // 使用 KernelSU 新的 WebUI 包管理器 API（支持自 v2.1.2）
+        if (typeof globalThis.ksu?.getPackagesInfo === 'function') {
+          try {
+            const info = await getPackagesInfo(pkg)
+            appName = info.appLabel || pkg
+            versionName = info.versionName || ''
+            versionCode = info.versionCode || 0
+          } catch {
+            // 静默失败，使用包名
+          }
+        } else {
+          // 回退到 kernelsu-alt 的 getPackagesInfo API
+          try {
+            const info = await getPackagesInfo(pkg)
+            appName = info.appLabel || pkg
+            versionName = info.versionName || ''
+            versionCode = info.versionCode || 0
+          } catch {
+            // 尝试使用 WebUI-X packageManager API
+            if (typeof window.$packageManager !== 'undefined') {
+              try {
+                const info = window.$packageManager.getApplicationInfo(pkg, 0, 0)
+                appName = info.getLabel() || pkg
+              } catch {
+                // 静默失败，使用包名
+              }
             }
           }
         }
@@ -129,7 +141,6 @@ export async function getInstalledApps() {
   }
 }
 
-// 检查文件是否存在
 export async function fileExists(path: string): Promise<boolean> {
   try {
     await execCommand(`test -f ${path}`)
@@ -142,17 +153,4 @@ export async function fileExists(path: string): Promise<boolean> {
 // 创建目录
 export async function mkdir(path: string): Promise<void> {
   await execCommand(`mkdir -p ${path}`)
-}
-
-// 导出 getPackagesIcon 供其他模块使用
-export { getPackagesIcon }
-
-export default {
-  execCommand,
-  readFile,
-  writeFile,
-  getInstalledApps,
-  fileExists,
-  mkdir,
-  getPackagesIcon,
 }

@@ -47,6 +47,7 @@ export default tseslint.config(
         cancelAnimationFrame: 'readonly',
         IntersectionObserver: 'readonly',
         HTMLElement: 'readonly',
+        HTMLImageElement: 'readonly',
         btoa: 'readonly',
         atob: 'readonly',
         localStorage: 'readonly',

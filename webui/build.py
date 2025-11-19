@@ -336,7 +336,7 @@ def main():
             print("\n" + "=" * 50)
             print("✅ 构建完成！")
             print(f"构建产物位于 {builder.dist_dir} 目录")
-            print("\n构建产物已集成到 Android 模块中")
+            print("\n构建产物已集成到模块中")
             print("=" * 50)
         
         elif args.command == "dev":

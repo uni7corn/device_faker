@@ -1,30 +1,16 @@
-declare module 'kernelsu-alt' {
-  export interface ExecResult {
-    errno: number
-    stdout: string
-    stderr: string
+// kernelsu-alt 模块的扩展类型声明（如果需要额外类型定义可以放在这里）
+
+// 扩展 globalThis 类型以支持 KernelSU 新的 WebUI 包管理器 API
+declare global {
+  interface KsuApi {
+    getPackagesInfo: (packageName: string) => Promise<{
+      appLabel: string
+      versionName: string
+      versionCode: number
+    }>
   }
 
-  export interface PackageInfo {
-    appLabel: string
-    versionName: string
-    versionCode: number
-  }
-
-  export function exec(command: string): Promise<ExecResult>
-
-  export function listPackages(type: 'user' | 'system'): Promise<string[]>
-
-  export function getPackagesInfo(packageName: string): Promise<PackageInfo>
-
-  export function getPackagesIcon(packageName: string): Promise<string>
-
-  export function toast(message: string): void
-
-  export function spawn(
-    command: string,
-    args: string[],
-    options?: { env?: Record<string, string> }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): any
+  var ksu: KsuApi | undefined
 }
+
+export {}

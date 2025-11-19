@@ -43,14 +43,21 @@
         @click="configureApp(app)"
       >
         <div class="app-icon-container" :data-package="app.packageName">
-          <div v-if="!appIcons[app.packageName]" class="icon-loader"></div>
+          <div
+            v-if="!appIcons[app.packageName] || (appIcons[app.packageName] !== 'fallback' && !iconLoaded[app.packageName])"
+            class="icon-loader"
+          ></div>
           <img
-            v-else-if="appIcons[app.packageName] !== 'fallback'"
+            v-if="appIcons[app.packageName] && appIcons[app.packageName] !== 'fallback'"
             :src="appIcons[app.packageName]"
             class="app-icon-img"
+            :class="{ loaded: iconLoaded[app.packageName] }"
             alt=""
+            loading="lazy"
+            @load="onIconLoad(app.packageName)"
+            @error="onIconError(app.packageName)"
           />
-          <Smartphone v-else :size="40" class="app-icon-fallback" />
+          <Smartphone v-if="appIcons[app.packageName] === 'fallback'" :size="40" class="app-icon-fallback" />
         </div>
         <div class="app-info">
           <h3 class="app-name">{{ app.appName }}</h3>
@@ -106,43 +113,43 @@
       <div v-if="configMode === 'custom'" class="custom-config">
         <el-form :model="customFormData" label-width="120px" label-position="top">
           <el-form-item label="Manufacturer">
-            <el-input v-model="customFormData.manufacturer" placeholder="如: Xiaomi, Samsung" />
+            <el-input v-model="customFormData.manufacturer" placeholder="例如：ZTE" />
           </el-form-item>
           <el-form-item label="Brand">
-            <el-input v-model="customFormData.brand" placeholder="如: Redmi, Nothing" />
+            <el-input v-model="customFormData.brand" placeholder="例如：nubia" />
           </el-form-item>
           <el-form-item label="Model">
-            <el-input v-model="customFormData.model" placeholder="如: 2210132G, SM-S9280" />
+            <el-input v-model="customFormData.model" placeholder="例如：25010PN30C，NX769J" />
           </el-form-item>
           <el-form-item label="Device">
-            <el-input v-model="customFormData.device" placeholder="如: REDMAGIC 9 Pro" />
+            <el-input v-model="customFormData.device" placeholder="例如：xuanyuan，NX769J" />
           </el-form-item>
           <el-form-item label="Product">
-            <el-input v-model="customFormData.product" placeholder="如: 2210132G, SM-S9280" />
+            <el-input v-model="customFormData.product" placeholder="例如：xuanyuan，NX769J" />
           </el-form-item>
-          <el-form-item label="Name（仅 full 模式生效）">
-            <el-input v-model="customFormData.name" placeholder="如: fuxi" />
+          <el-form-item label="Name (可选，仅 full 模式)">
+            <el-input v-model="customFormData.name" placeholder="例如：xuanyuan" />
           </el-form-item>
-          <el-form-item label="Market Name（仅 full 模式生效）">
-            <el-input v-model="customFormData.marketname" placeholder="如: REDMI K90 Pro Max" />
+          <el-form-item label="Market Name (可选，仅 full 模式)">
+            <el-input v-model="customFormData.marketname" placeholder="例如：REDMAGIC 9 Pro" />
           </el-form-item>
           <el-form-item label="Fingerprint">
             <el-input
               v-model="customFormData.fingerprint"
               type="textarea"
               :rows="3"
-              placeholder="如: Xiaomi/fuxi/fuxi:14/UKQ1..."
+              placeholder="例如：nubia/NX769J/NX769J:14/UKQ1.230917.001/20240813.173312:user/release-keys"
             />
           </el-form-item>
-          <el-form-item label="Mode（模式）">
+          <el-form-item label="工作模式 (可选)">
             <el-select
               v-model="customFormData.mode"
-              placeholder="留空使用全局默认"
+              placeholder="留空使用全局默认模式"
               clearable
               style="width: 100%"
             >
-              <el-option label="lite - 轻量模式（推荐）" value="lite" />
-              <el-option label="full - 完整模式" value="full" />
+              <el-option label="lite - 轻量模式（推荐，隐蔽性好）" value="lite" />
+              <el-option label="full - 完整模式（全面伪装，可能被检测）" value="full" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -167,7 +174,7 @@ import { ElMessage } from 'element-plus'
 import { useConfigStore } from '../stores/config'
 import { useAppsStore } from '../stores/apps'
 import type { InstalledApp, AppConfig } from '../types'
-import { getPackagesIcon } from '../utils/ksu'
+
 
 const configStore = useConfigStore()
 const appsStore = useAppsStore()
@@ -178,6 +185,7 @@ const loading = computed(() => appsStore.loading)
 const installedApps = computed(() => appsStore.installedApps)
 const templates = computed(() => configStore.getTemplates())
 const appIcons = ref<Record<string, string>>({})
+const iconLoaded = ref<Record<string, boolean>>({})
 const iconObserver = ref<IntersectionObserver | null>(null)
 
 const configuredCount = computed(() => {
@@ -337,6 +345,13 @@ async function saveAppConfig() {
 async function loadAppIcon(packageName: string) {
   if (appIcons.value[packageName]) return
 
+  // 首先检查是否有 KernelSU 新的 WebUI 包管理器 API（支持自 v2.1.2）
+  if (typeof globalThis.ksu?.getPackagesInfo === 'function') {
+    appIcons.value[packageName] = `ksu://icon/${packageName}`
+    return
+  }
+
+  // 回退到其他图标加载方法
   try {
     // 检查是否在 WebUI-X 环境
     if (typeof window.$packageManager !== 'undefined') {
@@ -358,22 +373,13 @@ async function loadAppIcon(packageName: string) {
           const buffer = await wrapped.arrayBuffer()
           const base64 = arrayBufferToBase64(buffer)
           appIcons.value[packageName] = `data:image/png;base64,${base64}`
+          // Base64 图片加载也需要触发 load 事件，但这里我们直接标记为 loaded
+          // 或者让 img 标签的 @load 处理
           return
         }
       } catch {
         // Fallback to KernelSU API
       }
-    }
-
-    // 检查是否有 KernelSU kernelsu-alt API
-    try {
-      const iconBase64 = await getPackagesIcon(packageName)
-      if (iconBase64) {
-        appIcons.value[packageName] = iconBase64
-        return
-      }
-    } catch {
-      // Use fallback icon
     }
 
     // 如果没有可用的 API，停止加载动画
@@ -382,6 +388,15 @@ async function loadAppIcon(packageName: string) {
     // 标记为失败，停止加载动画
     appIcons.value[packageName] = 'fallback'
   }
+}
+
+function onIconLoad(packageName: string) {
+  iconLoaded.value[packageName] = true
+}
+
+function onIconError(packageName: string) {
+  appIcons.value[packageName] = 'fallback'
+  iconLoaded.value[packageName] = true // 停止 loading 动画
 }
 
 // 动态加载 wrapInputStream 工具
@@ -592,7 +607,11 @@ onUnmounted(() => {
   object-fit: cover;
   border-radius: 0.75rem;
   opacity: 0;
-  animation: fadeIn 0.3s ease forwards;
+  transition: opacity 0.3s ease;
+}
+
+.app-icon-img.loaded {
+  opacity: 1;
 }
 
 .app-icon-fallback {
