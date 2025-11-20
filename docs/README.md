@@ -45,7 +45,7 @@ Device Faker 提供了现代化的 Web 管理界面，可以通过WebUI-X API访
 
 - [zygisk-dump-dex](https://github.com/ri-char/zygisk-dump-dex) - 提供了 Rust 开发 Zygisk 模块的原型参考
 - [zygisk-api-rs](https://github.com/rmnscnce/zygisk-api-rs) - 提供了 Zygisk API的 Rust 依赖支持
-- [MiPushZygisk](https://github.com/wushidia/MiPushZygisk) - 提供了 Zygisk 机型伪装的方案参考
+- [MiPushZygisk](https://github.com/wushidia/MiPushZygisk) 和 [COPG](https://github.com/AlirezaParsi/COPG#) - 提供了 Zygisk 机型伪装的方案参考
 
 感谢这些项目的开发者！💖
 
