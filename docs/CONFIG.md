@@ -30,6 +30,7 @@ default_mode = "lite"  # 推荐：轻量模式（隐藏性更好）
 - `"resetprop"` - Resetprop 模式
   - 使用 resetprop 工具修改属性
   - 支持修改只读属性（如 `ro.build.characteristics`）
+  - 在应用进入 resetprop 模式前会用 `getprop` 备份原始值，退出或切换到其它应用后由守护进程用 resetprop 自动还原
 
 ### debug（调试模式）
 

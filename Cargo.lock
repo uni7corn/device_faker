@@ -118,8 +118,10 @@ dependencies = [
  "anyhow",
  "cc",
  "jni",
+ "libc",
  "log",
  "serde",
+ "serde_json",
  "toml",
  "zygisk-api",
 ]

@@ -16,20 +16,21 @@ default_mode = "lite"  # Recommended: lightweight mode (better stealth)
 
 **Available values**:
 - `"lite"` - Lightweight mode (recommended) ⭐
-  - Only modifies Build class static fields
-  - Unloads module after completion
-  - Harder to detect
-  - Suitable for 90% of applications
+    - Only modifies Build class static fields
+    - Unloads module after completion
+    - Harder to detect
+    - Suitable for 90% of applications
 
 - `"full"` - Full mode
-  - Modifies Build class + spoofs SystemProperties
-  - Module stays in memory
-  - May be detected
-  - Only use when lite mode is insufficient
+    - Modifies Build class + spoofs SystemProperties
+    - Module stays in memory
+    - May be detected
+    - Only use when lite mode is insufficient
 
 - `"resetprop"` - Resetprop mode
-  - Uses resetprop tool to modify properties
-  - Supports modifying read-only properties (such as `ro.build.characteristics`)
+    - Uses resetprop tool to modify properties
+    - Supports modifying read-only properties (such as `ro.build.characteristics`)
+    - Automatically backs up original values via `getprop` before applying changes and restores them with resetprop when the target app exits or you switch to another app
 
 ### debug (Debug Mode)
 
