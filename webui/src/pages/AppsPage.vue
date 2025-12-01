@@ -44,7 +44,10 @@
       >
         <div class="app-icon-container" :data-package="app.packageName">
           <div
-            v-if="!appIcons[app.packageName] || (appIcons[app.packageName] !== 'fallback' && !iconLoaded[app.packageName])"
+            v-if="
+              !appIcons[app.packageName] ||
+              (appIcons[app.packageName] !== 'fallback' && !iconLoaded[app.packageName])
+            "
             class="icon-loader"
           ></div>
           <img
@@ -57,7 +60,11 @@
             @load="onIconLoad(app.packageName)"
             @error="onIconError(app.packageName)"
           />
-          <Smartphone v-if="appIcons[app.packageName] === 'fallback'" :size="40" class="app-icon-fallback" />
+          <Smartphone
+            v-if="appIcons[app.packageName] === 'fallback'"
+            :size="40"
+            class="app-icon-fallback"
+          />
         </div>
         <div class="app-info">
           <h3 class="app-name">{{ app.appName }}</h3>
@@ -174,7 +181,6 @@ import { ElMessage } from 'element-plus'
 import { useConfigStore } from '../stores/config'
 import { useAppsStore } from '../stores/apps'
 import type { InstalledApp, AppConfig } from '../types'
-
 
 const configStore = useConfigStore()
 const appsStore = useAppsStore()

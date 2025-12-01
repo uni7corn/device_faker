@@ -190,7 +190,7 @@ export async function downloadTemplate(onlineTemplate: OnlineTemplate): Promise<
     // 使用 device_faker_cli (Rust 实现)
     await execCommand(`${CLI_PATH} import -s "${onlineTemplate.downloadUrl}" -o "${tempFile}"`)
     const content = await execCommand(`cat "${tempFile}"`)
-    await execCommand(`rm -f "${tempFile}"`).catch(() => { })
+    await execCommand(`rm -f "${tempFile}"`).catch(() => {})
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsed = parseToml(content) as any
