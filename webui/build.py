@@ -111,19 +111,11 @@ class WebUIBuilder:
                 errors='ignore'
             )
             
-            # 限制输出长度以避免过多日志
+            # 输出完整结果
             if result.stdout:
-                stdout_lines = result.stdout.strip().split('\n')
-                if len(stdout_lines) > 20:
-                    logger.info('\n'.join(stdout_lines[:20]) + '\n... (输出过长，已截断)')
-                else:
-                    logger.info(result.stdout.strip())
+                logger.info(result.stdout.strip())
             if result.stderr:
-                stderr_lines = result.stderr.strip().split('\n')
-                if len(stderr_lines) > 20:
-                    logger.info('\n'.join(stderr_lines[:20]) + '\n... (输出过长，已截断)')
-                else:
-                    logger.info(result.stderr.strip())
+                logger.info(result.stderr.strip())
                     
             logger.info(f"{description} 完成")
             return result.returncode == 0
