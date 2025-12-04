@@ -395,6 +395,10 @@ onActivated(() => {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--text);
+  width: 80px;
+  word-break: break-all;
+  line-height: 1.3;
+  text-align: center;
 }
 
 .header-actions {
@@ -417,6 +421,7 @@ onActivated(() => {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;
+  white-space: nowrap;
 }
 
 .add-btn.secondary {
