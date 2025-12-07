@@ -79,6 +79,11 @@ onActivated(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* 确保宽度稳定，不受滚动条影响 */
+  overflow: hidden;
 }
 
 .status-card {

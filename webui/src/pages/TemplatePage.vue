@@ -183,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onActivated } from 'vue'
+import { ref, computed, onMounted, onActivated, nextTick } from 'vue'
 import { Plus, Edit2, Trash2, FileText, Download } from 'lucide-vue-next'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useConfigStore } from '../stores/config'
@@ -373,7 +373,67 @@ onMounted(() => {
 })
 
 onActivated(() => {
-  // KeepAlive 激活时，不重新加载应用列表，避免重复请求
+  // KeepAlive 激活时，确保布局正确
+  nextTick(() => {
+    // 更彻底的布局重置
+    const templatePage = document.querySelector('.template-page') as HTMLElement | null
+    const templateList = document.querySelector('.template-list') as HTMLElement | null
+    const templateCards = document.querySelectorAll('.template-card')
+    const glassElements = document.querySelectorAll('.glass-effect')
+
+    // 强制重新计算所有元素样式
+    const allElements = document.querySelectorAll('*')
+    allElements.forEach((element) => {
+      // 强制浏览器重新计算样式
+      void window.getComputedStyle(element).width
+      void window.getComputedStyle(element).height
+    })
+
+    // 触发全局重排
+    if (templatePage) {
+      void templatePage.offsetHeight
+    }
+
+    // 触发模板列表重排
+    if (templateList) {
+      void templateList.offsetHeight
+    }
+
+    // 触发每个模板卡片重排
+    templateCards.forEach((card) => {
+      const htmlCard = card as HTMLElement
+      // 重新应用样式
+      htmlCard.style.display = 'none'
+      void htmlCard.offsetHeight
+      htmlCard.style.display = ''
+      void htmlCard.offsetHeight
+    })
+
+    // 确保玻璃效果重新渲染
+    glassElements.forEach((element) => {
+      const htmlElement = element as HTMLElement
+      // 重新应用背景和模糊效果
+      const currentBackground = window.getComputedStyle(htmlElement).background
+      htmlElement.style.background = 'transparent'
+      void htmlElement.offsetHeight
+      htmlElement.style.background = currentBackground
+      void htmlElement.offsetHeight
+    })
+
+    // 触发窗口 resize 事件，确保全局布局更新
+    window.dispatchEvent(new Event('resize'))
+
+    // 触发滚动事件，确保滚动位置正确
+    window.dispatchEvent(new Event('scroll'))
+
+    // 触发滚动条宽度补偿更新
+    const mainContent = document.querySelector('.main-content') as HTMLElement
+    if (mainContent) {
+      // 触发滚动条宽度计算和补偿
+      const event = new Event('resize')
+      window.dispatchEvent(event)
+    }
+  })
 })
 </script>
 
@@ -382,6 +442,11 @@ onActivated(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* 确保宽度稳定，不受滚动条影响 */
+  overflow: hidden;
 }
 
 .page-header {
@@ -439,12 +504,27 @@ onActivated(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
+  max-width: 100%;
 }
 
 .template-card {
   padding: 1.25rem;
   border-radius: 1rem;
   box-shadow: 0 2px 8px var(--shadow);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  /* 增强布局稳定性 */
+  position: relative;
+  /* 触发硬件加速，增强渲染稳定性 */
+  transform: translateZ(0);
+  /* 防止布局抖动 */
+  contain: layout style paint;
+  /* 优化阴影实现 */
+  box-shadow:
+    0 2px 8px var(--shadow),
+    0 0 0 0 transparent;
 }
 
 .template-header {
@@ -452,10 +532,14 @@ onActivated(() => {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .template-info {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .template-name {
@@ -463,16 +547,30 @@ onActivated(() => {
   font-weight: 600;
   color: var(--text);
   margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* 增强宽度约束 */
+  width: 100%;
+  max-width: calc(100% - 80px); /* 减去操作按钮宽度 */
 }
 
 .template-device {
   font-size: 0.875rem;
   color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* 增强宽度约束 */
+  width: 100%;
+  max-width: calc(100% - 80px); /* 减去操作按钮宽度 */
 }
 
 .template-actions {
   display: flex;
   gap: 0.5rem;
+  flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .icon-btn {
@@ -657,6 +755,13 @@ onActivated(() => {
   -webkit-backdrop-filter: blur(40px) saturate(150%) brightness(1.1);
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  /* 确保对话框布局稳定 */
+  box-sizing: border-box;
+  width: 90%;
+  /* 触发硬件加速 */
+  transform: translateZ(0);
+  /* 防止对话框影响页面布局 */
+  contain: layout style paint;
 }
 
 /* 深色模式下的毛玻璃效果 */
@@ -709,20 +814,42 @@ onActivated(() => {
   }
 }
 
-/* 确保 Dialog 遮罩层在底栏之上，并添加模糊效果 */
+/* 确保 Dialog 遮罩层在底栏之上 */
 .template-dialog :deep(.el-overlay) {
   z-index: 2000 !important;
-  backdrop-filter: blur(12px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+  /* 降低背景模糊效果，减少对页面布局的影响 */
+  backdrop-filter: blur(8px) saturate(110%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(110%) !important;
   background-color: rgba(0, 0, 0, 0.25) !important;
+  /* 确保遮罩层不会影响页面布局 */
+  contain: layout style paint;
+  /* 防止遮罩层滚动条影响主页面 */
+  overflow: hidden;
 }
 
 @media (prefers-color-scheme: dark) {
   .template-dialog :deep(.el-overlay) {
-    backdrop-filter: blur(12px) saturate(120%) !important;
-    -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+    backdrop-filter: blur(8px) saturate(110%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(110%) !important;
     background-color: rgba(0, 0, 0, 0.4) !important;
   }
+}
+
+/* 对话框内容区域滚动条处理 */
+.template-dialog :deep(.el-dialog__body) {
+  /* 移除滚动条，防止影响主页面布局 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  /* 确保对话框内容滚动不会影响主页面 */
+  contain: layout style paint;
+  /* 优化滚动体验 */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 隐藏对话框内容区域滚动条 */
+.template-dialog :deep(.el-dialog__body::-webkit-scrollbar) {
+  display: none; /* Chrome/Safari/Opera */
 }
 </style>
 

@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watchEffect, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watchEffect, nextTick } from 'vue'
 import { Home, FileText, Smartphone, Settings } from 'lucide-vue-next'
 import { useConfigStore } from './stores/config'
 import { useSettingsStore } from './stores/settings'
@@ -46,6 +46,9 @@ const settingsStore = useSettingsStore()
 const currentPage = ref('status')
 let lastClickTime = 0
 let isChangingPage = false
+
+// 滚动条宽度补偿机制
+const scrollbarWidth = ref(0)
 
 // 处理页面切换，防止重复点击和事件冲突
 function handlePageChange(pageId: string) {
@@ -71,6 +74,16 @@ function handlePageChange(pageId: string) {
       currentPage.value = pageId
 
       nextTick(() => {
+        // 触发布局更新，确保元素适应新宽度
+        const mainContent = document.querySelector('.main-content') as HTMLElement
+        if (mainContent) {
+          // 触发重排
+          void mainContent.offsetHeight
+        }
+
+        // 触发窗口 resize 事件，确保全局布局更新
+        window.dispatchEvent(new Event('resize'))
+
         // 重置标志
         setTimeout(() => {
           isChangingPage = false
@@ -111,17 +124,79 @@ watchEffect(() => {
   }
 })
 
+// 计算滚动条宽度
+function calculateScrollbarWidth(): number {
+  // 创建一个测试元素来计算滚动条宽度
+  const testDiv = document.createElement('div')
+  testDiv.style.cssText = `
+    position: absolute;
+    top: -9999px;
+    width: 100px;
+    height: 100px;
+    overflow: scroll;
+    visibility: hidden;
+  `
+  document.body.appendChild(testDiv)
+
+  // 计算滚动条宽度
+  const width = testDiv.offsetWidth - testDiv.clientWidth
+  document.body.removeChild(testDiv)
+  return width
+}
+
+// 应用滚动条宽度补偿
+function applyScrollbarWidth() {
+  const width = calculateScrollbarWidth()
+  const previousWidth = scrollbarWidth.value
+  scrollbarWidth.value = width
+
+  // 为所有页面容器添加滚动条宽度补偿
+  const mainContent = document.querySelector('.main-content') as HTMLElement
+  if (mainContent) {
+    // 检查页面是否有垂直滚动条
+    const hasScrollbar = document.body.scrollHeight > window.innerHeight
+    const newPadding = hasScrollbar ? `${width}px` : '0px'
+    if (mainContent.style.paddingRight !== newPadding) {
+      mainContent.style.paddingRight = newPadding
+      // 记录调试信息
+      console.warn(
+        `[DeviceFaker] 滚动条宽度补偿更新: 滚动条宽度=${width}px, hasScrollbar=${hasScrollbar}, paddingRight=${newPadding}`
+      )
+    }
+  }
+
+  // 记录宽度变化
+  if (width !== previousWidth) {
+    console.warn(`[DeviceFaker] 滚动条宽度变化: 旧=${previousWidth}px, 新=${width}px`)
+  }
+}
+
 // 监听系统主题变化
 onMounted(() => {
   configStore.loadConfig()
   configStore.loadModuleVersion()
 
+  // 初始化滚动条宽度计算
+  applyScrollbarWidth()
+
+  // 监听窗口 resize 和滚动事件，动态更新滚动条宽度补偿
+  window.addEventListener('resize', applyScrollbarWidth)
+  window.addEventListener('scroll', applyScrollbarWidth)
+
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
   mediaQuery.addEventListener('change', () => {
     if (settingsStore.theme === 'system') {
       // 触发重新计算
+      applyScrollbarWidth()
+      window.dispatchEvent(new Event('resize'))
     }
   })
+})
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', applyScrollbarWidth)
+  window.removeEventListener('scroll', applyScrollbarWidth)
 })
 </script>
 
@@ -182,9 +257,13 @@ onMounted(() => {
 
 .main-content {
   flex: 1;
-  overflow-y: visible; /* 改为可见，不在这里滚动 */
+  overflow-y: auto;
   padding: 0 1rem;
   padding-bottom: 5.5rem; /* 为固定定位的底栏留出空间 */
+  /* 为滚动条预留固定空间，防止出现/消失时页面跳动 */
+  scrollbar-gutter: stable;
+  /* 兼容旧浏览器的备选方案 */
+  overflow-y: scroll;
 }
 
 .bottom-nav {

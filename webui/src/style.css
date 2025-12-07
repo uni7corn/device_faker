@@ -73,11 +73,18 @@ body {
   /* Android 平台优化 */
   overscroll-behavior-y: contain;
   touch-action: pan-y;
+  /* 为滚动条预留固定空间，防止出现/消失时页面跳动 */
+  scrollbar-gutter: stable;
+  /* 兼容旧浏览器的备选方案 */
+  overflow-y: scroll;
 }
 
 #app {
   min-height: 100%; /* 改为最小高度，允许内容超出 */
   width: 100%;
+  /* 确保宽度稳定，不受滚动条影响 */
+  box-sizing: border-box;
+  scrollbar-gutter: stable;
 }
 
 /* 毛玻璃效果 */
@@ -87,6 +94,14 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 8px 32px rgba(14, 165, 233, 0.1);
+  /* 确保布局稳定 */
+  box-sizing: border-box;
+  width: 100%;
+  position: relative;
+  /* 触发硬件加速，增强渲染稳定性 */
+  transform: translateZ(0);
+  /* 防止毛玻璃效果影响布局计算 */
+  contain: layout style paint;
 }
 
 .dark .glass-effect {

@@ -306,6 +306,15 @@ watch(
   max-height: 500px;
   overflow-y: auto;
   padding: 0.5rem;
+  /* 移除滚动条，防止影响主页面布局 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  contain: layout style paint;
+}
+
+/* 隐藏滚动条 */
+.template-grid::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
 }
 
 .online-template-card {
