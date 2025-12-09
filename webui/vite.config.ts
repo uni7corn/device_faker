@@ -9,10 +9,18 @@ export default defineConfig({
   plugins: [
     vue(),
     AutoImport({
+      imports: ['vue'],
       resolvers: [ElementPlusResolver()],
+      dts: 'src/auto-imports.d.ts',
+      eslintrc: {
+        enabled: true,
+        filepath: './.eslintrc-auto-import.json',
+        globalsPropValue: true,
+      },
     }),
     Components({
       resolvers: [ElementPlusResolver()],
+      dts: 'src/components.d.ts',
     }),
   ],
   resolve: {

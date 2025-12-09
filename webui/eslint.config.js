@@ -3,6 +3,7 @@ import pluginVue from 'eslint-plugin-vue'
 import configPrettier from 'eslint-config-prettier'
 import pluginPrettier from 'eslint-plugin-prettier'
 import tseslint from 'typescript-eslint'
+import autoImportGlobals from './.eslintrc-auto-import.json' with { type: 'json' }
 
 export default tseslint.config(
   {
@@ -58,6 +59,8 @@ export default tseslint.config(
         atob: 'readonly',
         localStorage: 'readonly',
         sessionStorage: 'readonly',
+        // 自动导入的全局变量
+        ...autoImportGlobals.globals,
       },
     },
 

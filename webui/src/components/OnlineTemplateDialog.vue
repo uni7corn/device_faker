@@ -101,8 +101,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading, CircleClose } from '@element-plus/icons-vue'
 import { toast } from 'kernelsu-alt'
 import {

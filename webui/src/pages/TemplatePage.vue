@@ -198,9 +198,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onActivated, nextTick } from 'vue'
 import { Plus, Edit2, Trash2, FileText, Download } from 'lucide-vue-next'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import { useConfigStore } from '../stores/config'
 import { useAppsStore } from '../stores/apps'
 import OnlineTemplateDialog from '../components/OnlineTemplateDialog.vue'

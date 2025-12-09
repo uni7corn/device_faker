@@ -11,9 +11,22 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    Button: typeof import('./components/Button.vue')['default']
-    Input: typeof import('./components/Input.vue')['default']
+    ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
+    ElButton: typeof import('element-plus/es')['ElButton']
+    ElDialog: typeof import('element-plus/es')['ElDialog']
+    ElForm: typeof import('element-plus/es')['ElForm']
+    ElFormItem: typeof import('element-plus/es')['ElFormItem']
+    ElIcon: typeof import('element-plus/es')['ElIcon']
+    ElInput: typeof import('element-plus/es')['ElInput']
+    ElOption: typeof import('element-plus/es')['ElOption']
+    ElRadio: typeof import('element-plus/es')['ElRadio']
+    ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
+    ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElSwitch: typeof import('element-plus/es')['ElSwitch']
     Modal: typeof import('./components/Modal.vue')['default']
-    Select: typeof import('./components/Select.vue')['default']
+    OnlineTemplateDialog: typeof import('./components/OnlineTemplateDialog.vue')['default']
+  }
+  export interface GlobalDirectives {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

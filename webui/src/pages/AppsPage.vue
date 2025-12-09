@@ -205,9 +205,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onActivated, onUnmounted, watch, nextTick } from 'vue'
 import { Smartphone, ChevronRight, Check } from 'lucide-vue-next'
-import { ElMessage } from 'element-plus'
 import { useConfigStore } from '../stores/config'
 import { useAppsStore } from '../stores/apps'
 import { useI18n } from '../utils/i18n'

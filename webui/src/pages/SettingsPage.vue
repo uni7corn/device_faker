@@ -158,9 +158,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onActivated } from 'vue'
 import { Moon, Globe, Settings, Bug, FileUp } from 'lucide-vue-next'
-import { ElMessage } from 'element-plus'
 import { useConfigStore } from '../stores/config'
 import { useSettingsStore } from '../stores/settings'
 import { writeFile, execCommand, readFile } from '../utils/ksu'
@@ -203,12 +201,13 @@ async function onModeChange(value: string) {
   }
 }
 
-async function onDebugChange(value: boolean) {
-  configStore.config.debug = value
+async function onDebugChange(value: string | number | boolean) {
+  const boolValue = Boolean(value)
+  configStore.config.debug = boolValue
   try {
     await configStore.saveConfig()
     ElMessage.success(
-      value ? t('settings.messages.debug_enabled') : t('settings.messages.debug_disabled')
+      boolValue ? t('settings.messages.debug_enabled') : t('settings.messages.debug_disabled')
     )
   } catch {
     ElMessage.error(t('settings.messages.save_failed'))
