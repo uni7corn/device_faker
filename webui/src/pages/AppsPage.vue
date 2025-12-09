@@ -110,12 +110,16 @@
         <el-select
           v-model="selectedTemplate"
           :placeholder="t('apps.dialog.select_template_placeholder')"
+          filterable
+          :filter-method="filterTemplates"
+          :no-match-text="t('apps.dialog.no_template_match')"
           style="width: 100%"
+          @visible-change="onTemplateSelectVisibleChange"
         >
           <el-option
-            v-for="(template, name) in templates"
+            v-for="name in filteredTemplateNames"
             :key="name"
-            :label="`${name} - ${template.brand} ${template.model}`"
+            :label="`${name} - ${templates[name].brand} ${templates[name].model}`"
             :value="name"
           />
         </el-select>
@@ -282,6 +286,37 @@ const customFormData = ref({
   fingerprint: '',
   mode: undefined as 'lite' | 'full' | undefined,
 })
+
+// 模板搜索过滤
+const templateSearchQuery = ref('')
+const filteredTemplateNames = computed(() => {
+  const allNames = Object.keys(templates.value)
+  if (!templateSearchQuery.value) {
+    return allNames
+  }
+  const query = templateSearchQuery.value.toLowerCase()
+  return allNames.filter((name) => {
+    const template = templates.value[name]
+    return (
+      name.toLowerCase().includes(query) ||
+      (template.brand && template.brand.toLowerCase().includes(query)) ||
+      (template.model && template.model.toLowerCase().includes(query)) ||
+      (template.manufacturer && template.manufacturer.toLowerCase().includes(query)) ||
+      (template.marketname && template.marketname.toLowerCase().includes(query))
+    )
+  })
+})
+
+function filterTemplates(query: string) {
+  templateSearchQuery.value = query
+}
+
+function onTemplateSelectVisibleChange(visible: boolean) {
+  if (!visible) {
+    // 下拉框关闭时重置搜索
+    templateSearchQuery.value = ''
+  }
+}
 
 function getAppConfig(packageName: string) {
   return configStore.getPackageConfig(packageName)

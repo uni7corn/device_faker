@@ -161,7 +161,8 @@ export const messages = {
         mode_template: '应用模板',
         mode_custom: '自定义配置',
         mode_remove: '移除配置',
-        select_template_placeholder: '选择机型模板',
+        select_template_placeholder: '搜索或选择机型模板',
+        no_template_match: '没有匹配的模板',
         remove_hint: '确定要移除该应用的伪装配置吗？',
       },
       messages: {
@@ -395,7 +396,8 @@ export const messages = {
         mode_template: 'Apply Template',
         mode_custom: 'Custom Config',
         mode_remove: 'Remove Config',
-        select_template_placeholder: 'Select Device Template',
+        select_template_placeholder: 'Search or select template',
+        no_template_match: 'No matching templates',
         remove_hint: 'Are you sure to remove the spoofing config for this app?',
       },
       messages: {
