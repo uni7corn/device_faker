@@ -27,6 +27,9 @@ pub struct DeviceTemplate {
     pub fingerprint: Option<String>,
     #[serde(default)]
     pub characteristics: Option<String>,
+    /// 是否为匹配的应用强制执行 FORCE_DENYLIST_UNMOUNT（默认继承全局设置）
+    #[serde(default)]
+    pub force_denylist_unmount: Option<bool>,
     /// 模板的工作模式（可选）
     #[serde(default)]
     pub mode: Option<String>,
@@ -54,6 +57,9 @@ pub struct AppConfig {
     pub fingerprint: Option<String>,
     #[serde(default)]
     pub characteristics: Option<String>,
+    /// 是否为该应用强制执行 FORCE_DENYLIST_UNMOUNT（默认继承全局设置）
+    #[serde(default)]
+    pub force_denylist_unmount: Option<bool>,
     /// 工作模式：
     /// - "lite": 只修改 Build 类（轻量模式，可卸载模块）
     /// - "full": Build + SystemProperties Hook（完整模式，不可卸载）
@@ -67,6 +73,9 @@ pub struct Config {
     /// 全局默认模式："lite", "full" 或 "resetprop"
     #[serde(default = "default_mode")]
     pub default_mode: String,
+    /// 是否默认启用 FORCE_DENYLIST_UNMOUNT（避免模块挂载痕迹）
+    #[serde(default)]
+    pub default_force_denylist_unmount: bool,
     /// 是否启用调试日志（默认关闭以提高隐蔽性）
     #[serde(default)]
     pub debug: bool,
@@ -113,6 +122,9 @@ impl Config {
                 product: app.product.clone(),
                 fingerprint: app.fingerprint.clone(),
                 characteristics: app.characteristics.clone(),
+                force_denylist_unmount: app
+                    .force_denylist_unmount
+                    .unwrap_or(self.default_force_denylist_unmount),
                 mode: app
                     .mode
                     .clone()
@@ -132,6 +144,9 @@ impl Config {
                 product: template.product.clone(),
                 fingerprint: template.fingerprint.clone(),
                 characteristics: template.characteristics.clone(),
+                force_denylist_unmount: template
+                    .force_denylist_unmount
+                    .unwrap_or(self.default_force_denylist_unmount),
                 mode: template
                     .mode
                     .clone()
@@ -215,5 +230,6 @@ pub struct MergedAppConfig {
     pub product: Option<String>,
     pub fingerprint: Option<String>,
     pub characteristics: Option<String>,
+    pub force_denylist_unmount: bool,
     pub mode: String,
 }

@@ -88,8 +88,6 @@ packages = [ "com.tencent.tmgp.cf" ]
 # 不使用模板，直接指定设备信息
 
 # QQ 平板模式配置
-# 使用 resetprop 修改 ro.build.characteristics 为 tablet
-# 机型伪装为 Xiaomi Pad 6 Pro (23046RP50C)
 #[[apps]]
 #package = "com.tencent.mobileqq"
 #mode = "resetprop"
@@ -97,6 +95,15 @@ packages = [ "com.tencent.tmgp.cf" ]
 #manufacturer = "Xiaomi"
 #brand = "Xiaomi"
 #model = "23046RP50C"
+
+# 微信平板模式配置
+# [[apps]]
+# package = "com.tencent.mm"
+# manufacturer = "samsung"
+# brand = "samsung"
+# model = "SM-F9560"
+# mode = "lite"  # 默认为 lite，按需可改 full/resetprop
+# force_denylist_unmount = true
 
 [[apps]]
 package = "com.coolapk.market"

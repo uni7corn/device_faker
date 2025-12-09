@@ -110,6 +110,13 @@ impl MyModule {
             return Ok(());
         };
 
+        if merged.force_denylist_unmount {
+            api.set_option(ZygiskOption::ForceDenylistUnmount);
+            if config.debug {
+                info!("Force denylist unmount enabled for {package_name}");
+            }
+        }
+
         if config.debug {
             info!("Using mode: {} for app: {package_name}", merged.mode);
         }
@@ -132,10 +139,25 @@ impl MyModule {
         env: &mut JNIEnv,
         args: &mut <V4 as ZygiskRaw>::AppSpecializeArgs,
     ) -> anyhow::Result<String> {
-        let nice_name = env
+        if let Ok(app_data_dir) = env.get_string(args.app_data_dir) {
+            let app_data: String = app_data_dir.into();
+            if let Some(package) = app_data.rsplit('/').next()
+                && !package.is_empty()
+            {
+                return Ok(package.to_string());
+            }
+        }
+
+        let mut nice_name: String = env
             .get_string(args.nice_name)
-            .context("Failed to get package name")?;
-        Ok(nice_name.into())
+            .context("Failed to get package name")?
+            .into();
+
+        if let Some(idx) = nice_name.find(':') {
+            nice_name.truncate(idx);
+        }
+
+        Ok(nice_name)
     }
 
     fn apply_lite_mode(api: &mut ZygiskApi<V4>, debug: bool) -> anyhow::Result<()> {

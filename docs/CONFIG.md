@@ -32,6 +32,15 @@ default_mode = "lite"  # 推荐：轻量模式（隐藏性更好）
   - 支持修改只读属性（如 `ro.build.characteristics`）
   - 在应用进入 resetprop 模式前会用 `getprop` 备份原始值，退出或切换到其它应用后由守护进程用 resetprop 自动还原
 
+### default_force_denylist_unmount（全局默认卸载挂载点）
+
+```toml
+# 默认 false：仅在需要的应用上开启
+default_force_denylist_unmount = false
+```
+
+**说明**：为目标应用启用 Zygisk 的 `FORCE_DENYLIST_UNMOUNT`，强制卸载模块挂载痕迹。可在全局开启，也可在模板 / 单个应用里覆盖。
+
 ### debug（调试模式）
 
 ```toml
@@ -151,6 +160,12 @@ model = "SM-S9280"
 | `name` | ❌ | `ro.product.name` + `ro.product.device` | 代号 (如: xuanyuan) |
 | `marketname` | ❌ | `ro.product.marketname` | 型号 (如: REDMI K90 Pro Max) |
 | `characteristics` | ❌ | `ro.build.characteristics` | 特性 (如: tablet) - 仅 resetprop 模式生效 |
+| `force_denylist_unmount` | N/A | N/A | 是否对该应用强制卸载模块挂载点；未指定时使用 `default_force_denylist_unmount` |
+
+**关于 `force_denylist_unmount`**：
+- 可写在全局（`default_force_denylist_unmount`）、模板或单个 `[[apps]]`。
+- 优先级：单个应用 > 模板 > 全局默认。
+- 适合微信等敏感 App，建议按需开启而非全局强开。
 
 **注意**:
 - 除了 `package` 外,所有字段都是可选的

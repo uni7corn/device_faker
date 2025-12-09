@@ -32,6 +32,15 @@ default_mode = "lite"  # Recommended: lightweight mode (better stealth)
     - Supports modifying read-only properties (such as `ro.build.characteristics`)
     - Automatically backs up original values via `getprop` before applying changes and restores them with resetprop when the target app exits or you switch to another app
 
+### default_force_denylist_unmount (Global Default for Unmounting Module Mounts)
+
+```toml
+# Default false: enable only for sensitive apps
+default_force_denylist_unmount = false
+```
+
+**Description**: Enables Zygisk `FORCE_DENYLIST_UNMOUNT` for target apps to force-unmount module mount points. You can enable it globally or override in templates / per-app entries.
+
 ### debug (Debug Mode)
 
 ```toml
@@ -151,6 +160,12 @@ model = "SM-S9280"
 | `name` | ❌ | `ro.product.name` + `ro.product.device` | Code name (e.g.: xuanyuan) |
 | `marketname` | ❌ | `ro.product.marketname` | Model name (e.g.: REDMI K90 Pro Max) |
 | `characteristics` | ❌ | `ro.build.characteristics` | Characteristics (e.g.: tablet) - only effective in resetprop mode |
+| `force_denylist_unmount` | N/A | N/A | Whether to force-unmount module mount points for this app; falls back to `default_force_denylist_unmount` when unspecified |
+
+**About `force_denylist_unmount`**:
+- Can be set globally (`default_force_denylist_unmount`), in templates, or per `[[apps]]`.
+- Priority: per-app > template > global default.
+- Use for sensitive apps (e.g., WeChat); recommended to enable only where needed instead of globally.
 
 **Notes**:
 - All fields except `package` are optional
