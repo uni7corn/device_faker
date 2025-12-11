@@ -23,7 +23,6 @@ declare module 'vue' {
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
-    Modal: typeof import('./src/components/Modal.vue')['default']
     OnlineTemplateDialog: typeof import('./src/components/OnlineTemplateDialog.vue')['default']
   }
   export interface GlobalDirectives {
