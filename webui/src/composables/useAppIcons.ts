@@ -42,11 +42,6 @@ export function useAppIcons() {
   const loadAppIcon = async (packageName: string) => {
     if (appIcons.value[packageName]) return
 
-    if (typeof globalThis.ksu?.getPackagesInfo === 'function') {
-      appIcons.value[packageName] = `ksu://icon/${packageName}`
-      return
-    }
-
     try {
       if (typeof window.$packageManager !== 'undefined') {
         const pm = window.$packageManager
@@ -71,6 +66,13 @@ export function useAppIcons() {
         } catch {
           // ignore and fallback
         }
+      }
+
+      // Check for KSU API
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof (globalThis as any).ksu?.getPackagesInfo !== 'undefined') {
+        appIcons.value[packageName] = `ksu://icon/${packageName}`
+        return
       }
 
       appIcons.value[packageName] = 'fallback'

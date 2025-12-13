@@ -86,32 +86,25 @@ export async function getInstalledApps() {
         let versionName = ''
         let versionCode = 0
 
-        // 使用 KernelSU 新的 WebUI 包管理器 API（支持自 v2.1.2）
-        if (typeof globalThis.ksu?.getPackagesInfo === 'function') {
-          try {
+        // 使用 kernelsu-alt 的 getPackagesInfo API
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if (typeof (globalThis as any).ksu?.getPackagesInfo !== 'undefined') {
             const info = await getPackagesInfo(pkg)
             appName = info.appLabel || pkg
             versionName = info.versionName || ''
             versionCode = info.versionCode || 0
-          } catch {
-            // 静默失败，使用包名
+          } else {
+            throw new Error('No ksu api')
           }
-        } else {
-          // 回退到 kernelsu-alt 的 getPackagesInfo API
-          try {
-            const info = await getPackagesInfo(pkg)
-            appName = info.appLabel || pkg
-            versionName = info.versionName || ''
-            versionCode = info.versionCode || 0
-          } catch {
-            // 尝试使用 WebUI-X packageManager API
-            if (typeof window.$packageManager !== 'undefined') {
-              try {
-                const info = window.$packageManager.getApplicationInfo(pkg, 0, 0)
-                appName = info.getLabel() || pkg
-              } catch {
-                // 静默失败，使用包名
-              }
+        } catch {
+          // 尝试使用 WebUI-X packageManager API
+          if (typeof window.$packageManager !== 'undefined') {
+            try {
+              const info = window.$packageManager.getApplicationInfo(pkg, 0, 0)
+              appName = info.getLabel() || pkg
+            } catch {
+              // 静默失败，使用包名
             }
           }
         }
@@ -153,4 +146,13 @@ export async function fileExists(path: string): Promise<boolean> {
 // 创建目录
 export async function mkdir(path: string): Promise<void> {
   await execCommand(`mkdir -p ${path}`)
+}
+
+export default {
+  execCommand,
+  readFile,
+  writeFile,
+  getInstalledApps,
+  fileExists,
+  mkdir,
 }
