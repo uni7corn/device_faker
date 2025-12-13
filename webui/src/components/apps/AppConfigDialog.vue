@@ -151,7 +151,7 @@
 import { computed, ref, watch } from 'vue'
 import { useConfigStore } from '../../stores/config'
 import { useI18n } from '../../utils/i18n'
-import { useLazyMessage } from '../../utils/elementPlus'
+import { toast } from 'kernelsu-alt'
 import type { InstalledApp, AppConfig } from '../../types'
 
 interface TemplateOption {
@@ -169,7 +169,6 @@ const emit = defineEmits<{ 'update:modelValue': [boolean]; saved: [] }>()
 
 const configStore = useConfigStore()
 const { t } = useI18n()
-const getMessage = useLazyMessage()
 
 const templates = computed(() => configStore.getTemplates())
 const visible = computed({
@@ -290,8 +289,6 @@ function syncFromExistingConfig() {
 async function saveAppConfig() {
   if (!props.app) return
 
-  const message = await getMessage()
-
   if (configMode.value === 'remove') {
     configStore.deleteApp(props.app.packageName)
     const templateMap = configStore.getTemplates()
@@ -303,7 +300,7 @@ async function saveAppConfig() {
     }
   } else if (configMode.value === 'template') {
     if (!selectedTemplate.value) {
-      message.error(t('apps.messages.select_template'))
+      toast(t('apps.messages.select_template'))
       return
     }
 
@@ -344,11 +341,11 @@ async function saveAppConfig() {
 
   try {
     await configStore.saveConfig()
-    message.success(t('apps.messages.saved'))
+    toast(t('apps.messages.saved'))
     visible.value = false
     emit('saved')
   } catch {
-    message.error(t('common.failed'))
+    toast(t('common.failed'))
   }
 }
 

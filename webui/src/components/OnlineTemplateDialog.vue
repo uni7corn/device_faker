@@ -113,7 +113,7 @@ import {
 } from '../utils/onlineTemplates'
 import { useConfigStore } from '../stores/config'
 import { useI18n } from '../utils/i18n'
-import { useLazyMessage, useLazyMessageBox } from '../utils/elementPlus'
+import { useLazyMessageBox } from '../utils/elementPlus'
 
 const props = defineProps<{
   modelValue: boolean
@@ -125,7 +125,6 @@ const emit = defineEmits<{
 
 const configStore = useConfigStore()
 const { t } = useI18n()
-const getMessage = useLazyMessage()
 const getMessageBox = useLazyMessageBox()
 
 const visible = computed({
@@ -203,10 +202,8 @@ async function loadTemplates() {
 
 // 导入模板
 async function importTemplate(onlineTemplate: OnlineTemplate) {
-  const message = await getMessage()
-
   if (!onlineTemplate.template) {
-    message.error(t('templates.online.errors.empty_content'))
+    toast(t('templates.online.errors.empty_content'))
     return
   }
 
@@ -235,10 +232,10 @@ async function importTemplate(onlineTemplate: OnlineTemplate) {
     configStore.setTemplate(templateName, onlineTemplate.template)
     await configStore.saveConfig()
 
-    message.success(t('templates.online.messages.import_success', { name: templateName }))
+    toast(t('templates.online.messages.import_success', { name: templateName }))
   } catch (e) {
     if (e !== 'cancel') {
-      message.error(t('templates.online.errors.import_failed'))
+      toast(t('templates.online.errors.import_failed'))
     }
   } finally {
     importingTemplates.value.delete(onlineTemplate.path)

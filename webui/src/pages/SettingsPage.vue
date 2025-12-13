@@ -194,13 +194,12 @@ import { useSettingsStore } from '../stores/settings'
 import { writeFile, execCommand, readFile } from '../utils/ksu'
 import { parse as parseToml } from 'smol-toml'
 import { useI18n } from '../utils/i18n'
-import { useLazyMessage } from '../utils/elementPlus'
+import { toast } from 'kernelsu-alt'
 import type { Template } from '../types'
 
 const configStore = useConfigStore()
 const settingsStore = useSettingsStore()
 const { t } = useI18n()
-const getMessage = useLazyMessage()
 
 const currentTheme = ref(settingsStore.theme)
 const currentLanguage = ref(settingsStore.language)
@@ -226,36 +225,31 @@ function onLanguageChange(value: string) {
 
 async function onModeChange(value: string) {
   configStore.config.default_mode = value as 'lite' | 'full' | 'resetprop'
-  const message = await getMessage()
   try {
     await configStore.saveConfig()
-    message.success(t('settings.messages.default_mode_updated'))
+    toast(t('settings.messages.default_mode_updated'))
   } catch {
-    message.error(t('settings.messages.save_failed'))
+    toast(t('settings.messages.save_failed'))
   }
 }
 
 async function onForceDenylistUnmountChange(value: boolean) {
   configStore.config.default_force_denylist_unmount = value
-  const message = await getMessage()
   try {
     await configStore.saveConfig()
-    message.success(t('common.saved'))
+    toast(t('common.saved'))
   } catch {
-    message.error(t('settings.messages.save_failed'))
+    toast(t('settings.messages.save_failed'))
   }
 }
 
 async function onDebugChange(value: boolean) {
   configStore.config.debug = value
-  const message = await getMessage()
   try {
     await configStore.saveConfig()
-    message.success(
-      value ? t('settings.messages.debug_enabled') : t('settings.messages.debug_disabled')
-    )
+    toast(value ? t('settings.messages.debug_enabled') : t('settings.messages.debug_disabled'))
   } catch {
-    message.error(t('settings.messages.save_failed'))
+    toast(t('settings.messages.save_failed'))
   }
 }
 
@@ -264,9 +258,8 @@ function showInputDialog() {
 }
 
 async function startConversion() {
-  const message = await getMessage()
   if (!convertPath.value) {
-    message.warning(t('settings.messages.input_path'))
+    toast(t('settings.messages.input_path'))
     return
   }
 
@@ -274,7 +267,7 @@ async function startConversion() {
   try {
     const content = await readFile(convertPath.value)
     if (!content) {
-      message.error(t('settings.messages.read_failed'))
+      toast(t('settings.messages.read_failed'))
       return
     }
 
@@ -365,7 +358,7 @@ async function startConversion() {
     // Cleanup
     await execCommand(`rm ${tempInputPath} ${tempOutputPath}`)
   } catch (err) {
-    message.error(
+    toast(
       `${t('settings.messages.convert_failed')}: ${err instanceof Error ? err.message : String(err)}`
     )
     console.error(err)
@@ -375,9 +368,8 @@ async function startConversion() {
 }
 
 async function saveConvertedTemplate() {
-  const message = await getMessage()
   if (!convertedTemplateName.value) {
-    message.warning(t('settings.dialog.result.template_name_placeholder'))
+    toast(t('settings.dialog.result.template_name_placeholder'))
     return
   }
   if (!convertedTemplate.value) return
@@ -385,10 +377,10 @@ async function saveConvertedTemplate() {
   try {
     configStore.setTemplate(convertedTemplateName.value, convertedTemplate.value)
     await configStore.saveConfig()
-    message.success(t('settings.messages.template_saved'))
+    toast(t('settings.messages.template_saved'))
     convertDialogVisible.value = false
   } catch (err) {
-    message.error(
+    toast(
       `${t('settings.messages.save_failed')}: ${err instanceof Error ? err.message : String(err)}`
     )
   }

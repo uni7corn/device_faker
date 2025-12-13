@@ -30,13 +30,13 @@ import OnlineTemplateDialog from '../components/OnlineTemplateDialog.vue'
 import { useAppsStore } from '../stores/apps'
 import { useConfigStore } from '../stores/config'
 import { useI18n } from '../utils/i18n'
-import { useLazyMessage, useLazyMessageBox } from '../utils/elementPlus'
+import { useLazyMessageBox } from '../utils/elementPlus'
+import { toast } from 'kernelsu-alt'
 import type { Template } from '../types'
 
 const configStore = useConfigStore()
 const appsStore = useAppsStore()
 const { t, locale } = useI18n()
-const getMessage = useLazyMessage()
 const getMessageBox = useLazyMessageBox()
 
 const templates = computed(() => configStore.getTemplates())
@@ -83,8 +83,7 @@ async function deleteTemplateConfirm(name: string) {
 
     configStore.deleteTemplate(name)
     await configStore.saveConfig()
-    const message = await getMessage()
-    message.success(t('templates.messages.deleted'))
+    toast(t('templates.messages.deleted'))
   } catch {
     // 用户取消
   }
