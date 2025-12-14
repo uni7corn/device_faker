@@ -1,3 +1,5 @@
+#[cfg(target_os = "android")]
+mod atexit;
 mod companion;
 mod config;
 mod hooks;
