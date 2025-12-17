@@ -64,18 +64,6 @@ product = "NP05J"
 fingerprint = ""
 packages = [ "com.tencent.tmgp.cf" ]
 
-# 需要完整模式的模板示例（如果某些应用需要 SystemProperties 伪装）
-# [templates.special_device_full]
-# packages = [
-#     "com.some.special.app",
-# ]
-# manufacturer = "Xiaomi"
-# brand = "Xiaomi"
-# model = "2210132G"
-# product = "fuxi"
-# name = "fuxi"  # full 模式下生效
-# mode = "full"  # 为这个模板的所有应用设置完整模式
-
 # ============================================================
 # 应用配置
 # ============================================================

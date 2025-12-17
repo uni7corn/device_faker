@@ -43,7 +43,7 @@ This project references the following excellent projects during development:
 
 - [zygisk-dump-dex](https://github.com/ri-char/zygisk-dump-dex) - Provides prototype reference for Rust Zygisk module development
 - [zygisk-api-rs](https://github.com/rmnscnce/zygisk-api-rs) - Provides Rust dependency support for Zygisk API
-- [MiPushZygisk](https://github.com/wushidia/MiPushZygisk) and [COPG](https://github.com/AlirezaParsi/COPG#) - Provides reference for Zygisk device spoofing solutions
+- [MiPushZygisk](https://github.com/wushidia/MiPushZygisk) - Provides reference for Zygisk device spoofing solutions
 
 Thanks to the developers of these projects! 💖
 
