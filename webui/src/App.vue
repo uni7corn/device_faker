@@ -282,16 +282,19 @@ onUnmounted(() => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.5rem;
+  line-height: 1;
   position: relative;
   z-index: 1;
 }
 
 .version {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 400;
   color: var(--text-secondary);
+  line-height: 1;
+  padding-bottom: 0.1rem;
 }
 
 .main-content {
