@@ -39,6 +39,8 @@ const templates = computed(() => props.templates)
   gap: 1rem;
   width: 100%;
   max-width: 100%;
+  padding: 0 1rem 0 0;
+  box-sizing: border-box;
 }
 
 .empty-state {
@@ -48,6 +50,10 @@ const templates = computed(() => props.templates)
   justify-content: center;
   padding: 3rem 1rem;
   text-align: center;
+  margin: 0 1rem 0 0;
+  border-radius: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
 .empty-icon {
