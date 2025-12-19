@@ -194,7 +194,9 @@ function applyScrollbarWidth() {
   if (mainContent) {
     // 检查页面是否有垂直滚动条
     const hasScrollbar = document.body.scrollHeight > window.innerHeight
-    const newPadding = hasScrollbar ? `${width}px` : '0px'
+    // 始终保持至少1rem的右侧内边距，加上滚动条宽度（如果有）
+    const basePadding = 16 // 1rem = 16px
+    const newPadding = hasScrollbar ? `${basePadding + width}px` : `${basePadding}px`
     if (mainContent.style.paddingRight !== newPadding) {
       mainContent.style.paddingRight = newPadding
       // 记录调试信息

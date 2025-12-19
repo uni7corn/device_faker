@@ -137,7 +137,6 @@ const { t } = useI18n()
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
-  max-width: calc(100% - 80px);
 }
 
 .template-device {
@@ -147,7 +146,6 @@ const { t } = useI18n()
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
-  max-width: calc(100% - 80px);
 }
 
 .template-actions {

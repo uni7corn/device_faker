@@ -4,10 +4,13 @@
     <el-input
       v-model="searchModel"
       :placeholder="t('apps.search_placeholder')"
-      prefix-icon="Search"
       clearable
       class="search-input"
-    />
+    >
+      <template #prefix>
+        <el-icon><Search /></el-icon>
+      </template>
+    </el-input>
   </div>
 
   <div class="filter-tabs">
@@ -20,27 +23,21 @@
     >
       {{ t('apps.tabs.configured') }} ({{ configuredCount }})
     </button>
-    <button
-      :class="['filter-tab', { active: filterType === 'unconfigured' }]"
-      @click="setFilter('unconfigured')"
-    >
-      {{ t('apps.tabs.unconfigured') }} ({{ unconfiguredCount }})
-    </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Search } from '@element-plus/icons-vue'
 import { useI18n } from '../../utils/i18n'
 
-type FilterType = 'all' | 'configured' | 'unconfigured'
+type FilterType = 'all' | 'configured'
 
 const props = defineProps<{
   searchQuery: string
   filterType: FilterType
   totalCount: number
   configuredCount: number
-  unconfiguredCount: number
 }>()
 
 const emit = defineEmits<{ 'update:searchQuery': [string]; 'update:filterType': [FilterType] }>()
@@ -78,11 +75,11 @@ const setFilter = (type: FilterType) => emit('update:filterType', type)
 .filter-tabs {
   display: flex;
   gap: 0.5rem;
-  overflow-x: auto;
   padding-bottom: 0.5rem;
 }
 
 .filter-tab {
+  flex: 1;
   padding: 0.5rem 1rem;
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -92,6 +89,7 @@ const setFilter = (type: FilterType) => emit('update:filterType', type)
   font-weight: 500;
   transition: all 0.2s ease;
   white-space: nowrap;
+  text-align: center;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;

@@ -5,7 +5,6 @@
       v-model:filter-type="filterType"
       :total-count="allApps.length"
       :configured-count="configuredCount"
-      :unconfigured-count="unconfiguredCount"
     />
 
     <AppList :apps="filteredApps" :empty-text="emptyText" :loading="loading" @select="openConfig" />
@@ -25,7 +24,7 @@ import { useI18n } from '../utils/i18n'
 import { normalizePackageName } from '../utils/package'
 import type { InstalledApp } from '../types'
 
-type FilterType = 'all' | 'configured' | 'unconfigured'
+type FilterType = 'all' | 'configured'
 
 const configStore = useConfigStore()
 const appsStore = useAppsStore()
@@ -92,37 +91,26 @@ const allApps = computed<InstalledApp[]>(() => {
     }
   }
 
-  // 合并配置项：保持已安装顺序，如有同归一化包名则复用其展示信息
+  // 合并配置项：如果包名不同（即使归一化后相同），也应显示为不同应用
   for (const app of configuredApps.value) {
-    const normalized = normalizePackageName(app.packageName)
-
     if (packageIndex.has(app.packageName)) continue
 
+    // 查找具有相同归一化包名的已存在应用，复用其展示信息
+    const normalized = normalizePackageName(app.packageName)
     const existingIdx = normalizedIndex.get(normalized)
 
-    if (existingIdx !== undefined) {
-      const merged = {
-        ...result[existingIdx],
-        packageName: app.packageName,
-        installed: true,
-      }
-
-      result[existingIdx] = merged
-      packageIndex.set(app.packageName, existingIdx)
-      continue
-    }
-
     const entry = {
-      ...app,
-      installed: app.installed ?? false,
+      // 如果有相同归一化包名的应用，复用其展示信息，否则使用默认信息
+      ...(existingIdx !== undefined ? result[existingIdx] : {}),
+      packageName: app.packageName,
+      appName: existingIdx !== undefined ? result[existingIdx].appName : app.packageName,
+      installed:
+        existingIdx !== undefined ? result[existingIdx].installed : (app.installed ?? false),
     }
 
     const idx = result.length
     result.push(entry)
     packageIndex.set(app.packageName, idx)
-    if (!normalizedIndex.has(normalized)) {
-      normalizedIndex.set(normalized, idx)
-    }
   }
 
   return result
@@ -131,8 +119,6 @@ const allApps = computed<InstalledApp[]>(() => {
 const configuredCount = computed(
   () => allApps.value.filter((app) => configStore.isPackageConfigured(app.packageName)).length
 )
-
-const unconfiguredCount = computed(() => allApps.value.length - configuredCount.value)
 
 const filteredApps = computed(() => {
   let apps = allApps.value
@@ -146,8 +132,6 @@ const filteredApps = computed(() => {
 
   if (filterType.value === 'configured') {
     apps = apps.filter((app) => configStore.isPackageConfigured(app.packageName))
-  } else if (filterType.value === 'unconfigured') {
-    apps = apps.filter((app) => !configStore.isPackageConfigured(app.packageName))
   }
 
   return apps.slice().sort((a, b) => {
@@ -162,7 +146,6 @@ const filteredApps = computed(() => {
 const emptyText = computed(() => {
   if (searchQuery.value) return t('apps.empty.search')
   if (filterType.value === 'configured') return t('apps.empty.configured')
-  if (filterType.value === 'unconfigured') return t('apps.empty.unconfigured')
   return t('apps.empty.all')
 })
 
@@ -187,8 +170,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
 }
