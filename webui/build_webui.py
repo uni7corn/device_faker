@@ -86,7 +86,7 @@ class WebUIBuilder:
         return self.run_command(["npm", "install"], "npm 依赖安装")
     
     def run_command(self, command: list, description: str, use_npm: bool = True) -> bool:
-        """执行命令并返回是否成功
+        """执行命令并返回是否成功，实时显示输出
         
         Args:
             command: 要执行的命令列表
@@ -102,27 +102,53 @@ class WebUIBuilder:
                 command[0] = npm_path
         
         try:
-            result = subprocess.run(
+            # 使用 Popen 实现实时输出
+            process = subprocess.Popen(
                 command,
                 cwd=self.project_dir,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,  # 合并 stderr 到 stdout
                 text=True,
                 encoding='utf-8',
-                errors='ignore'
+                errors='ignore',
+                bufsize=1,  # 行缓冲
+                universal_newlines=True
             )
             
-            # 输出完整结果
-            if result.stdout:
-                logger.info(result.stdout.strip())
-            if result.stderr:
-                logger.info(result.stderr.strip())
-                    
-            logger.info(f"{description} 完成")
-            return result.returncode == 0
-        except subprocess.CalledProcessError as e:
+            # 确保 stdout 不为 None
+            if process.stdout is None:
+                logger.error(f"{description} 失败: 无法获取输出流")
+                return False
+            
+            # 实时读取并输出
+            while True:
+                line = process.stdout.readline()
+                if line:
+                    # 直接打印到控制台，保持原始格式
+                    print(line.rstrip())
+                    sys.stdout.flush()
+                elif process.poll() is not None:
+                    # 进程已结束，读取剩余输出
+                    remaining = process.stdout.read()
+                    if remaining:
+                        print(remaining.rstrip())
+                        sys.stdout.flush()
+                    break
+            
+            return_code = process.returncode
+            
+            if return_code == 0:
+                logger.info(f"{description} 完成")
+            else:
+                logger.error(f"{description} 失败，返回码: {return_code}")
+            
+            return return_code == 0
+            
+        except FileNotFoundError:
+            logger.error(f"{description} 失败: 找不到命令 {command[0]}")
+            return False
+        except Exception as e:
             logger.error(f"{description} 失败: {e}")
-            if hasattr(e, 'stderr') and e.stderr:
-                logger.error(f"错误输出: {e.stderr.strip()}")
             return False
     
     def dev(self) -> None:
