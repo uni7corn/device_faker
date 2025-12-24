@@ -1,4 +1,5 @@
 import { nextTick, ref } from 'vue'
+import { wrapInputStream } from 'webuix'
 import { normalizePackageName } from '../utils/package'
 
 const ICON_CONTAINER_SELECTOR = '.app-icon-container'
@@ -7,15 +8,9 @@ type IconMap = Record<string, string>
 type IconLoadedMap = Record<string, boolean>
 
 async function loadWrapInputStream() {
+  // 优先使用 webuix 库的 wrapInputStream
   if (typeof window.wrapInputStream === 'undefined') {
-    try {
-      const moduleUrl = 'https://mui.kernelsu.org/internal/assets/ext/wrapInputStream.mjs'
-      const importFn = new Function('url', 'return import(url)')
-      const module = await importFn(moduleUrl)
-      window.wrapInputStream = module.wrapInputStream
-    } catch {
-      // ignore
-    }
+    window.wrapInputStream = wrapInputStream
   }
 }
 

@@ -158,9 +158,12 @@ function handleConfigSaved() {
   // 预留钩子，未来可在保存后刷新列表或提示
 }
 
-onMounted(async () => {
-  if (appsStore.installedApps.length === 0) {
-    await appsStore.loadInstalledApps()
+onMounted(() => {
+  if (appsStore.installedApps.length === 0 && !appsStore.loading) {
+    // 延迟到下一帧再加载，先完成页面切换体验
+    requestAnimationFrame(() => {
+      void appsStore.loadInstalledApps()
+    })
   }
 })
 </script>

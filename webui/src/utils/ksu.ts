@@ -43,6 +43,86 @@ export async function writeFile(path: string, content: string): Promise<void> {
   await execCommand(`echo '${escapedContent}' > ${path}`)
 }
 
+/**
+ * 使用 WebUI-X $packageManager API 获取已安装应用列表
+ */
+async function getInstalledAppsViaWebUIX(): Promise<string[]> {
+  if (typeof window.$packageManager === 'undefined') {
+    return []
+  }
+
+  try {
+    // 获取用户应用 (userId=0)
+    const packagesJson = window.$packageManager.getInstalledPackages(0, 0)
+    if (!packagesJson) return []
+
+    const packages: string[] = JSON.parse(packagesJson)
+    return packages
+  } catch {
+    return []
+  }
+}
+
+/**
+ * 使用 kernelsu-alt 的 listPackages API 获取已安装应用列表
+ */
+async function getInstalledAppsViaKernelSU(): Promise<string[]> {
+  try {
+    const [userPkgs, systemPkgs] = await Promise.all([
+      listPackages('user').catch(() => []),
+      listPackages('system').catch(() => []),
+    ])
+    return [...userPkgs, ...systemPkgs]
+  } catch {
+    return []
+  }
+}
+
+/**
+ * 使用 WebUI-X $packageManager API 获取单个应用信息
+ */
+function getAppInfoViaWebUIX(
+  packageName: string
+): { appName: string; versionName: string; versionCode: number } | null {
+  if (typeof window.$packageManager === 'undefined') {
+    return null
+  }
+
+  try {
+    const info = window.$packageManager.getApplicationInfo(packageName, 0, 0)
+    return {
+      appName: info.getLabel() || packageName,
+      versionName: info.getVersionName() || '',
+      versionCode: info.getVersionCode() || 0,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 使用 kernelsu-alt 的 getPackagesInfo API 获取单个应用信息
+ */
+async function getAppInfoViaKernelSU(
+  packageName: string
+): Promise<{ appName: string; versionName: string; versionCode: number } | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).ksu?.getPackagesInfo === 'undefined') {
+    return null
+  }
+
+  try {
+    const info = await getPackagesInfo(packageName)
+    return {
+      appName: info.appLabel || packageName,
+      versionName: info.versionName || '',
+      versionCode: info.versionCode || 0,
+    }
+  } catch {
+    return null
+  }
+}
+
 // 获取已安装应用列表
 export async function getInstalledApps() {
   // 开发模式返回模拟数据
@@ -54,25 +134,19 @@ export async function getInstalledApps() {
   try {
     let packageList: string[] = []
 
-    // 使用 kernelsu-alt 的 listPackages API
-    try {
-      const [userPkgs, systemPkgs] = await Promise.all([
-        listPackages('user').catch(() => []),
-        listPackages('system').catch(() => []),
-      ])
-      packageList = [...userPkgs, ...systemPkgs]
-    } catch {
-      // Fallback to pm list packages
+    // 优先使用 WebUI-X $packageManager API
+    if (typeof window.$packageManager !== 'undefined') {
+      packageList = await getInstalledAppsViaWebUIX()
     }
 
-    // Fallback: 使用 pm list packages
+    // 如果 WebUI-X 没有返回结果，回退到 kernelsu-alt API
     if (packageList.length === 0) {
-      try {
-        const packages = await execCommand('pm list packages | cut -d: -f2')
-        packageList = packages.split('\n').filter((p) => p.trim())
-      } catch {
-        return []
-      }
+      packageList = await getInstalledAppsViaKernelSU()
+    }
+
+    // 如果仍然没有获取到应用列表，返回空列表
+    if (packageList.length === 0) {
+      return []
     }
 
     // 去重
@@ -83,53 +157,34 @@ export async function getInstalledApps() {
     // 批量获取应用信息
     for (const pkg of packageList) {
       const normalizedPkg = normalizePackageName(pkg)
-      try {
-        let appName = pkg
-        let versionName = ''
-        let versionCode = 0
+      let appName = pkg
+      let versionName = ''
+      let versionCode = 0
 
-        // 使用 kernelsu-alt 的 getPackagesInfo API
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (typeof (globalThis as any).ksu?.getPackagesInfo !== 'undefined') {
-            const info = await getPackagesInfo(normalizedPkg)
-            appName = info.appLabel || pkg
-            versionName = info.versionName || ''
-            versionCode = info.versionCode || 0
-          } else {
-            throw new Error('No ksu api')
-          }
-        } catch {
-          // 尝试使用 WebUI-X packageManager API
-          if (typeof window.$packageManager !== 'undefined') {
-            try {
-              const info = window.$packageManager.getApplicationInfo(normalizedPkg, 0, 0)
-              appName = info.getLabel() || pkg
-            } catch {
-              // 静默失败，使用包名
-            }
-          }
+      // 优先使用 WebUI-X $packageManager API 获取应用信息
+      const webUIXInfo = getAppInfoViaWebUIX(normalizedPkg)
+      if (webUIXInfo) {
+        appName = webUIXInfo.appName
+        versionName = webUIXInfo.versionName
+        versionCode = webUIXInfo.versionCode
+      } else {
+        // 回退到 kernelsu-alt API
+        const ksuInfo = await getAppInfoViaKernelSU(normalizedPkg)
+        if (ksuInfo) {
+          appName = ksuInfo.appName
+          versionName = ksuInfo.versionName
+          versionCode = ksuInfo.versionCode
         }
-
-        apps.push({
-          packageName: pkg,
-          appName,
-          icon: '',
-          versionName,
-          versionCode,
-          installed: true,
-        })
-      } catch {
-        // 即使获取信息失败，也添加基本信息
-        apps.push({
-          packageName: pkg,
-          appName: pkg,
-          icon: '',
-          versionName: '',
-          versionCode: 0,
-          installed: true,
-        })
       }
+
+      apps.push({
+        packageName: pkg,
+        appName,
+        icon: '',
+        versionName,
+        versionCode,
+        installed: true,
+      })
     }
 
     return apps
